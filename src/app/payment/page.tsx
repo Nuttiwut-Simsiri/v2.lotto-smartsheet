@@ -4,7 +4,10 @@ import { useRewardnHPStore } from "@/hooks/useRewardStore";
 import { useMainStore } from "@/hooks/useMainStore";
 import { Rewards, HPNumbersProps } from "@/model/rewards";
 import { useEffect, useState } from "react";
-import { CreditCard, Trophy, CheckCircle2, AlertTriangle, Hash } from "lucide-react";
+import { CreditCard, Trophy, CheckCircle2, AlertTriangle, Hash, Share2, Printer, Eye } from "lucide-react";
+import { CongratsModal } from "@/components/congrats-modal";
+import { toPng } from 'html-to-image';
+import { useRef } from "react";
 
 const WinningInput = ({ label, value, onChange, maxLength }: any) => {
   const [localValue, setLocalValue] = useState(value);
@@ -132,6 +135,72 @@ export default function PaymentPage() {
     setAllWinOrders(totalReward)
   }, [totalReward, setAllWinOrders])
 
+  // Group winOrders by customer for the new table design
+  const groupedWinners = winOrders?.reduce((acc: any[], current: any) => {
+    const existing = acc.find(item => item.name === current.name);
+    if (existing) {
+      existing.rewardPrice += current.rewardPrice;
+      // Unique winning numbers
+      const nums = existing.number.split(" ");
+      if (!nums.includes(current.number)) {
+        existing.number += ` ${current.number}`;
+      }
+      existing.details.push(current);
+    } else {
+      acc.push({
+        name: current.name,
+        number: current.number,
+        rewardPrice: current.rewardPrice,
+        sum: current.rewardPrice, // For congrats slip
+        details: [current]
+      });
+    }
+    return acc;
+  }, []);
+
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isSharingReward, setIsSharingReward] = useState(false);
+  const rewardModalRef = useRef<HTMLDialogElement>(null);
+  const rewardShareRef = useRef<HTMLDivElement>(null);
+
+  const openReward = (user: any) => {
+    setSelectedUser(user);
+    rewardModalRef.current?.showModal();
+  }
+
+  const handleShareReward = async () => {
+    if (!rewardShareRef.current || isSharingReward) return;
+    setIsSharingReward(true);
+    try {
+      const dataUrl = await toPng(rewardShareRef.current, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        canvasWidth: 800,
+        style: { margin: '0', width: '800px' }
+      });
+
+      const blob = await (await fetch(dataUrl)).blob();
+      const fileName = `reward-congrats-${selectedUser?.name}-${Date.now()}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `ยินดีกับคุณ ${selectedUser?.name}!`,
+          text: `ขอแสดงความยินดีกับคุณ ${selectedUser?.name} ที่ถูกรางวัลค่ะ!`
+        });
+      } else {
+        const link = document.createElement('a');
+        link.download = fileName; link.href = dataUrl; link.click();
+      }
+    } catch (err) {
+      console.error('Reward sharing failed', err);
+    } finally {
+      setIsSharingReward(false);
+    }
+  }
+
   return (
     <main className="animate-fade-in max-w-7xl mx-auto w-full px-4 pt-12 pb-32">
       <div className="mb-12">
@@ -187,8 +256,8 @@ export default function PaymentPage() {
           <div className="glass-card border-zinc-800/50 overflow-hidden shadow-2xl">
             <div className="overflow-x-auto min-w-full">
               <div className="min-w-[600px]">
-                <div className="grid grid-cols-[1.2fr_1fr_1.5fr_0.8fr_1.2fr] bg-zinc-900/50 p-4 border-b border-zinc-800">
-                  {["ชื่อลูกค้า", "หมายเลข", "ข้อมูลการซื้อ", "เลขอั้น", "ยอดที่ถูก"].map((h, i) => (
+                <div className="grid grid-cols-[1.5fr_2fr_1.2fr_0.8fr] bg-zinc-900/50 p-4 border-b border-zinc-800">
+                  {["ชื่อลูกค้า", "หมายเลขที่ถูก", "ยอดจ่ายรางวัล", ""].map((h, i) => (
                     <div key={i} className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center first:text-left first:px-2">
                       {h}
                     </div>
@@ -196,25 +265,36 @@ export default function PaymentPage() {
                 </div>
 
                 <div className="divide-y divide-zinc-800/50">
-                  {winOrders && winOrders.length > 0 ? (
-                    winOrders.map((el: any) => (
-                      <div key={el.id} className="grid grid-cols-[1.2fr_1fr_1.5fr_0.8fr_1.2fr] items-center p-4 hover:bg-zinc-800/20 transition-colors">
-                        <div className="text-sm font-semibold text-white px-2 truncate">{el.name}</div>
-                        <div className="text-lg font-mono font-bold text-center text-blue-400 bg-blue-500/5 py-1 rounded-lg mx-4">
-                          {el.number}
+                  {groupedWinners && groupedWinners.length > 0 ? (
+                    groupedWinners.map((el: any) => (
+                      <div key={el.name} className="grid grid-cols-[1.5fr_2fr_1.2fr_0.8fr] items-center p-5 hover:bg-zinc-800/20 transition-all border-l-4 border-transparent hover:border-emerald-500/30 group">
+                        <div className="px-2">
+                          <div className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors uppercase">{el.name}</div>
+                          <div className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-tighter">
+                            ถูกทั้งหมด {el.details.length} รายการ
+                          </div>
                         </div>
-                        <div className="text-xs text-zinc-400 text-center italic">{el.buyAmountLabel}</div>
-                        <div className="flex justify-center">
-                          {el.halfPayRate ? (
-                            <span className="flex items-center gap-1 text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold">
-                              <AlertTriangle size={10} /> อั้น
+
+                        <div className="flex flex-wrap justify-center gap-1.5 px-4">
+                          {el.number.split(" ").map((num: string, idx: number) => (
+                            <span key={idx} className="px-3 py-1 bg-blue-500/10 text-blue-400 text-sm font-mono font-bold rounded-lg border border-blue-500/20 shadow-sm">
+                              {num}
                             </span>
-                          ) : (
-                            <span className="text-zinc-700 text-xs">-</span>
-                          )}
+                          ))}
                         </div>
-                        <div className="text-base font-bold text-center text-emerald-400">
+
+                        <div className="text-lg font-black text-center text-emerald-400 drop-shadow-sm">
                           {el.rewardPrice?.toLocaleString('th-TH')}
+                        </div>
+
+                        <div className="flex justify-end pr-4">
+                          <button
+                            onClick={() => openReward(el)}
+                            className="p-3 bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl transition-all active:scale-90 shadow-lg shadow-amber-500/5 group/btn"
+                            title="แชร์ความยินดี"
+                          >
+                            <Trophy size={18} className="group-hover/btn:rotate-12 transition-transform" />
+                          </button>
                         </div>
                       </div>
                     ))
@@ -230,6 +310,14 @@ export default function PaymentPage() {
           </div>
         </section>
       </div>
+
+      <CongratsModal
+        modalRef={rewardModalRef}
+        shareRef={rewardShareRef}
+        selectedUser={selectedUser}
+        isSharing={isSharingReward}
+        onShare={handleShareReward}
+      />
     </main>
   )
 }

@@ -1,0 +1,202 @@
+"use client"
+import useCustomStore from '@/hooks/useCustomStore';
+import { useMainStore } from '@/hooks/useMainStore';
+import AddSetNumbers from "../components/addsetnumbers";
+import UserOrders from '@/components/user-orders';
+import NRow from "../components/nrow";
+import React, { useCallback, useRef } from 'react';
+import { toJpeg } from 'html-to-image';
+import { toast } from 'react-toastify';
+import { Trash2, Smartphone, Search, RefreshCw, PlusCircle } from 'lucide-react';
+import { stringToColor } from '@/utils/colors';
+
+
+export default function Home() {
+  const orders = useCustomStore(useMainStore, (state: any) => state.orders)
+  const uniqOrder = useCustomStore(useMainStore, (state: any) => state.uniqOrder)
+  const filterKeyword = useCustomStore(useMainStore, (state: any) => state.filterKeyword)
+  const changeKeyword = useMainStore((state) => state.changeKeyword)
+  const changeColor = useMainStore((state) => state.changeColor)
+  const removeOrder = useMainStore((state) => state.removeOrder)
+  const removeAllOrder = useMainStore((state) => state.removeAllOrder)
+
+  const ref = useRef<HTMLDivElement>(null)
+
+  const onCapture = useCallback((name: string) => {
+    if (ref.current === null) return
+
+    toJpeg(ref.current, { quality: 0.98 })
+      .then((dataUrl) => {
+        const file_name = `lotto_sheet_${name}_${new Date().getTime()}.jpeg`
+        const link = document.createElement('a')
+        link.download = file_name
+        link.href = dataUrl
+        link.click()
+        toast.success("บันทึกรูปภาพสำเร็จ!");
+      })
+      .catch((err) => {
+        console.error(err)
+        toast.error("บันทึกรูปภาพไม่สำเร็จ");
+      })
+  }, [ref])
+
+  const modalRef = useRef<HTMLDialogElement>(null);
+
+  const onShowRemoveAllOrderModal = () => {
+    modalRef.current?.showModal()
+  }
+
+  const tableHeaders = ["ชื่อ", "หมายเลข", "บน", "โต๊ด", "ล่าง", "รวม"];
+
+  return (
+    <main className="animate-fade-in max-w-7xl mx-auto w-full px-4 pt-12 pb-32">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+        <div>
+          <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+            ตารางจัดการการซื้อขาย
+          </h1>
+          <p className="text-zinc-500 mt-2 text-lg">จัดการใบสั่งซื้อหวยของคุณอย่างชาญฉลาด</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onShowRemoveAllOrderModal}
+            className="flex items-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl transition-all duration-300 font-medium group"
+          >
+            <Trash2 size={20} className="group-hover:rotate-12 transition-transform" />
+            <span>ลบทั้งหมด</span>
+          </button>
+
+          <button
+            onClick={() => window.location.reload()}
+            className="p-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-2xl transition-colors"
+          >
+            <RefreshCw size={24} />
+          </button>
+
+          <AddSetNumbers />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10 items-start">
+        {/* Sidebar / Filters */}
+        <aside className="space-y-8 sticky top-12">
+          <div className="glass-card p-6 border-zinc-800/50">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Search size={16} /> การแสดงผล
+            </h2>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs text-zinc-500 ml-1">กรองตามรายชื่อ</label>
+                <select
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer"
+                  value={filterKeyword}
+                  onChange={(ev) => changeKeyword(ev.target.value)}
+                >
+                  <option value="ทั้งหมด">ทั้งหมดทุกรายชื่อ</option>
+                  {uniqOrder?.map((el: any) => (
+                    <option key={el.name} value={el.name}>{el.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider ml-1">รายชื่อลูกค้า</h2>
+            <div className="space-y-2">
+              {uniqOrder?.map((el: any, index: number) => {
+                const customerColor = stringToColor(el.name);
+                return (
+                  <div key={index} className="glass-card p-4 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-3 h-3 rounded-full shadow-lg shadow-blue-500/20"
+                        style={{ backgroundColor: customerColor }}
+                      />
+                      <span className="font-bold text-zinc-100" style={{ color: customerColor }}>{el.name}</span>
+                    </div>
+                    <UserOrders username={el.name} hColor={customerColor} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content Areas */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-display font-semibold text-white">
+              รายการหวย <span className="text-zinc-500 text-base font-normal ml-2">({orders?.length || 0} รายการ)</span>
+            </h3>
+            <button
+              onClick={() => onCapture(filterKeyword)}
+              className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-lg shadow-blue-600/20 font-medium"
+            >
+              <Smartphone size={18} />
+              <span>แคปหน้าจอ</span>
+            </button>
+          </div>
+
+          <div className="glass-card overflow-hidden border-zinc-800/50 shadow-2xl" ref={ref}>
+            <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_50px] bg-zinc-900/50 border-b border-zinc-800 p-4">
+              {tableHeaders.map((header) => (
+                <div key={header} className="text-xs font-bold text-zinc-400 uppercase tracking-widest text-center px-2">
+                  {header}
+                </div>
+              ))}
+              <div />
+            </div>
+
+            <div className="divide-y divide-zinc-800/50">
+              {orders && (filterKeyword === "ทั้งหมด"
+                ? orders
+                : orders.filter((el: any) => el?.name === filterKeyword)
+              ).map((rowData: any, index: number) => (
+                <NRow
+                  rowData={rowData}
+                  key={rowData.id}
+                  index={index}
+                  removeOrder={removeOrder}
+                />
+              ))}
+
+              {(!orders || orders.length === 0) && (
+                <div className="py-20 flex flex-col items-center justify-center text-zinc-500 gap-4">
+                  <div className="p-4 bg-zinc-800/30 rounded-full">
+                    <Smartphone size={40} className="opacity-20" />
+                  </div>
+                  <p>ไม่มีข้อมูลการสั่งซื้อในขณะนี้</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <dialog id="delete_modal" className="modal modal-middle md:modal-bottom" ref={modalRef}>
+        <div className="modal-box glass-card border-zinc-800/50">
+          <h3 className="font-bold text-2xl text-white font-display">ลบรายการทั้งหมด?</h3>
+          <p className="py-6 text-zinc-400">คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลการซื้อขายทั้งหมด? ข้อมูลที่ถูกลบไปแล้วจะไม่สามารถเรียกคืนได้</p>
+          <div className="modal-action gap-3">
+            <form method="dialog" className="flex gap-3 w-full sm:w-auto">
+              <button className="flex-1 sm:flex-none px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl transition-all font-medium">ยกเลิก</button>
+              <button
+                className="flex-1 sm:flex-none px-8 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg shadow-red-600/20 font-medium"
+                onClick={() => removeAllOrder()}
+              >
+                ยืนยันการลบ
+              </button>
+            </form>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+    </main>
+  )
+}

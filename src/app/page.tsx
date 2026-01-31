@@ -4,10 +4,8 @@ import { useMainStore } from '@/hooks/useMainStore';
 import AddSetNumbers from "../components/addsetnumbers";
 import UserOrders from '@/components/user-orders';
 import NRow from "../components/nrow";
-import React, { useCallback, useRef } from 'react';
-import { toJpeg } from 'html-to-image';
-import { toast } from 'react-toastify';
-import { Trash2, Smartphone, Search, RefreshCw, PlusCircle } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Trash2, Search, RefreshCw, Smartphone } from 'lucide-react';
 import { stringToColor } from '@/utils/colors';
 
 
@@ -16,30 +14,10 @@ export default function Home() {
   const uniqOrder = useCustomStore(useMainStore, (state: any) => state.uniqOrder)
   const filterKeyword = useCustomStore(useMainStore, (state: any) => state.filterKeyword)
   const changeKeyword = useMainStore((state) => state.changeKeyword)
-  const changeColor = useMainStore((state) => state.changeColor)
   const removeOrder = useMainStore((state) => state.removeOrder)
   const removeAllOrder = useMainStore((state) => state.removeAllOrder)
 
   const ref = useRef<HTMLDivElement>(null)
-
-  const onCapture = useCallback((name: string) => {
-    if (ref.current === null) return
-
-    toJpeg(ref.current, { quality: 0.98 })
-      .then((dataUrl) => {
-        const file_name = `lotto_sheet_${name}_${new Date().getTime()}.jpeg`
-        const link = document.createElement('a')
-        link.download = file_name
-        link.href = dataUrl
-        link.click()
-        toast.success("บันทึกรูปภาพสำเร็จ!");
-      })
-      .catch((err) => {
-        console.error(err)
-        toast.error("บันทึกรูปภาพไม่สำเร็จ");
-      })
-  }, [ref])
-
   const modalRef = useRef<HTMLDialogElement>(null);
 
   const onShowRemoveAllOrderModal = () => {
@@ -81,7 +59,7 @@ export default function Home() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10 items-start">
         {/* Sidebar / Filters */}
-        <aside className="space-y-8 sticky top-12">
+        <aside className="space-y-8 lg:sticky lg:top-12">
           <div className="glass-card p-6 border-zinc-800/50">
             <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Search size={16} /> การแสดงผล
@@ -131,46 +109,43 @@ export default function Home() {
             <h3 className="text-xl font-display font-semibold text-white">
               รายการหวย <span className="text-zinc-500 text-base font-normal ml-2">({orders?.length || 0} รายการ)</span>
             </h3>
-            <button
-              onClick={() => onCapture(filterKeyword)}
-              className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-lg shadow-blue-600/20 font-medium"
-            >
-              <Smartphone size={18} />
-              <span>แคปหน้าจอ</span>
-            </button>
           </div>
 
-          <div className="glass-card overflow-hidden border-zinc-800/50 shadow-2xl" ref={ref}>
-            <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_50px] bg-zinc-900/50 border-b border-zinc-800 p-4">
-              {tableHeaders.map((header) => (
-                <div key={header} className="text-xs font-bold text-zinc-400 uppercase tracking-widest text-center px-2">
-                  {header}
+          <div className="glass-card border-zinc-800/50 shadow-2xl overflow-hidden" ref={ref}>
+            <div className="overflow-x-auto min-w-full">
+              <div className="min-w-[600px]">
+                <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_50px] bg-zinc-900/50 border-b border-zinc-800 p-4">
+                  {tableHeaders.map((header) => (
+                    <div key={header} className="text-xs font-bold text-zinc-400 uppercase tracking-widest text-center px-2">
+                      {header}
+                    </div>
+                  ))}
+                  <div />
                 </div>
-              ))}
-              <div />
-            </div>
 
-            <div className="divide-y divide-zinc-800/50">
-              {orders && (filterKeyword === "ทั้งหมด"
-                ? orders
-                : orders.filter((el: any) => el?.name === filterKeyword)
-              ).map((rowData: any, index: number) => (
-                <NRow
-                  rowData={rowData}
-                  key={rowData.id}
-                  index={index}
-                  removeOrder={removeOrder}
-                />
-              ))}
+                <div className="divide-y divide-zinc-800/50">
+                  {orders && (filterKeyword === "ทั้งหมด"
+                    ? orders
+                    : orders.filter((el: any) => el?.name === filterKeyword)
+                  ).map((rowData: any, index: number) => (
+                    <NRow
+                      rowData={rowData}
+                      key={rowData.id}
+                      index={index}
+                      removeOrder={removeOrder}
+                    />
+                  ))}
 
-              {(!orders || orders.length === 0) && (
-                <div className="py-20 flex flex-col items-center justify-center text-zinc-500 gap-4">
-                  <div className="p-4 bg-zinc-800/30 rounded-full">
-                    <Smartphone size={40} className="opacity-20" />
-                  </div>
-                  <p>ไม่มีข้อมูลการสั่งซื้อในขณะนี้</p>
+                  {(!orders || orders.length === 0) && (
+                    <div className="py-20 flex flex-col items-center justify-center text-zinc-500 gap-4">
+                      <div className="p-4 bg-zinc-800/30 rounded-full">
+                        <Smartphone size={40} className="opacity-20" />
+                      </div>
+                      <p>ไม่มีข้อมูลการสั่งซื้อในขณะนี้</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -198,5 +173,5 @@ export default function Home() {
         </form>
       </dialog>
     </main>
-  )
+  );
 }

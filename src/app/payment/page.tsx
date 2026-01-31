@@ -148,7 +148,7 @@ export default function PaymentPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-10 items-start">
         {/* Left: Input Form */}
-        <aside className="glass-card p-6 border-zinc-800/50 space-y-6 sticky top-12">
+        <aside className="glass-card p-6 border-zinc-800/50 space-y-6 lg:sticky lg:top-12">
           <div className="flex items-center gap-2 text-zinc-400 text-sm font-semibold uppercase tracking-wider mb-2">
             <Trophy size={16} /> ผลรางวัลประจำงวด
           </div>
@@ -185,43 +185,47 @@ export default function PaymentPage() {
           </div>
 
           <div className="glass-card border-zinc-800/50 overflow-hidden shadow-2xl">
-            <div className="grid grid-cols-[1.2fr_1fr_1.5fr_0.8fr_1.2fr] bg-zinc-900/50 p-4 border-b border-zinc-800">
-              {["ชื่อลูกค้า", "หมายเลข", "ข้อมูลการซื้อ", "เลขอั้น", "ยอดที่ถูก"].map((h, i) => (
-                <div key={i} className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center first:text-left first:px-2">
-                  {h}
+            <div className="overflow-x-auto min-w-full">
+              <div className="min-w-[600px]">
+                <div className="grid grid-cols-[1.2fr_1fr_1.5fr_0.8fr_1.2fr] bg-zinc-900/50 p-4 border-b border-zinc-800">
+                  {["ชื่อลูกค้า", "หมายเลข", "ข้อมูลการซื้อ", "เลขอั้น", "ยอดที่ถูก"].map((h, i) => (
+                    <div key={i} className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center first:text-left first:px-2">
+                      {h}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="divide-y divide-zinc-800/50">
-              {winOrders && winOrders.length > 0 ? (
-                winOrders.map((el: any) => (
-                  <div key={el.id} className="grid grid-cols-[1.2fr_1fr_1.5fr_0.8fr_1.2fr] items-center p-4 hover:bg-zinc-800/20 transition-colors">
-                    <div className="text-sm font-semibold text-white px-2 truncate">{el.name}</div>
-                    <div className="text-lg font-mono font-bold text-center text-blue-400 bg-blue-500/5 py-1 rounded-lg mx-4">
-                      {el.number}
+                <div className="divide-y divide-zinc-800/50">
+                  {winOrders && winOrders.length > 0 ? (
+                    winOrders.map((el: any) => (
+                      <div key={el.id} className="grid grid-cols-[1.2fr_1fr_1.5fr_0.8fr_1.2fr] items-center p-4 hover:bg-zinc-800/20 transition-colors">
+                        <div className="text-sm font-semibold text-white px-2 truncate">{el.name}</div>
+                        <div className="text-lg font-mono font-bold text-center text-blue-400 bg-blue-500/5 py-1 rounded-lg mx-4">
+                          {el.number}
+                        </div>
+                        <div className="text-xs text-zinc-400 text-center italic">{el.buyAmountLabel}</div>
+                        <div className="flex justify-center">
+                          {el.halfPayRate ? (
+                            <span className="flex items-center gap-1 text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold">
+                              <AlertTriangle size={10} /> อั้น
+                            </span>
+                          ) : (
+                            <span className="text-zinc-700 text-xs">-</span>
+                          )}
+                        </div>
+                        <div className="text-base font-bold text-center text-emerald-400">
+                          {el.rewardPrice?.toLocaleString('th-TH')}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-32 flex flex-col items-center justify-center text-zinc-500 gap-4 opacity-40">
+                      <Trophy size={60} />
+                      <p className="text-lg font-medium">ยังไม่มีข้อมูลผู้ถูกรางวัลในขณะนี้</p>
                     </div>
-                    <div className="text-xs text-zinc-400 text-center italic">{el.buyAmountLabel}</div>
-                    <div className="flex justify-center">
-                      {el.halfPayRate ? (
-                        <span className="flex items-center gap-1 text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full font-bold">
-                          <AlertTriangle size={10} /> อั้น
-                        </span>
-                      ) : (
-                        <span className="text-zinc-700 text-xs">-</span>
-                      )}
-                    </div>
-                    <div className="text-base font-bold text-center text-emerald-400">
-                      {el.rewardPrice?.toLocaleString('th-TH')}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="py-32 flex flex-col items-center justify-center text-zinc-500 gap-4 opacity-40">
-                  <Trophy size={60} />
-                  <p className="text-lg font-medium">ยังไม่มีข้อมูลผู้ถูกรางวัลในขณะนี้</p>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </section>

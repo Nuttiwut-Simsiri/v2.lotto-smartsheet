@@ -38,7 +38,7 @@ export default function SummaryPage() {
             <p className="text-zinc-400 text-sm leading-relaxed">
               ระบบคำนวณกำไรโดยหักเปอร์เซ็นต์ (20%) และคำนวณยอดที่ต้องโอนระหว่างตัวแทนโดยอัตโนมัติ
             </p>
-          </div>
+          </div> 
         </div>
 
         {/* Orders Table */}

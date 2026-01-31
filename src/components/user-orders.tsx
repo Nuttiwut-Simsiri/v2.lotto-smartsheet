@@ -161,7 +161,7 @@ const UserOrders = ({ username, hColor }: { username: string, hColor: string }) 
                                 <div className="bg-zinc-900/30 rounded-3xl border border-zinc-800 overflow-hidden flex flex-col h-full min-h-[400px]">
                                     <div className="grid grid-cols-[1fr_0.8fr_0.8fr_0.8fr_0.8fr_40px] bg-zinc-900/50 p-4 border-b border-zinc-800/50">
                                         {["เลข", "บน", "โต๊ด", "ล่าง", "รวม", ""].map(h => (
-                                            <div key={h} className="text-[10px] font-bold text-zinc-500 uppercase text-center">{h}</div>
+                                            <div key={h} className="text-[10px] sm:text-xs font-bold text-zinc-500 uppercase text-center">{h}</div>
                                         ))}
                                     </div>
                                     <div className="divide-y divide-zinc-900/50 overflow-y-auto max-h-[450px]">

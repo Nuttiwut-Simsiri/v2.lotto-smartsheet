@@ -1,20 +1,20 @@
 import { Suspense } from 'react'
 import { BottomNavBar } from '../components/bottom-navbar'
 import './globals.css'
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { Inter, Outfit } from 'next/font/google';
+import { Itim, Mali } from 'next/font/google';
 
-const inter = Inter({
-  subsets: ['latin'],
+const itim = Itim({
+  weight: ['400'],
+  subsets: ['latin', 'thai'],
   display: 'swap',
-  variable: '--font-sans',
+  variable: '--font-playful',
 });
 
-const outfit = Outfit({
-  subsets: ['latin'],
+const mali = Mali({
+  weight: ['200', '300', '400', '500', '600', '700'],
+  subsets: ['latin', 'thai'],
   display: 'swap',
-  variable: '--font-display',
+  variable: '--font-friendly',
 });
 
 export const metadata = {
@@ -29,7 +29,7 @@ export default function RootLayout({
 }) {
 
   return (
-    <html lang="en" data-theme="dark" className={`${inter.variable} ${outfit.variable}`}>
+    <html lang="en" data-theme="dark" className={`${itim.variable} ${mali.variable} font-friendly`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </head>
@@ -40,18 +40,6 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <BottomNavBar />
         </Suspense>
-        <ToastContainer
-          position="bottom-right"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
       </body>
     </html>
   )

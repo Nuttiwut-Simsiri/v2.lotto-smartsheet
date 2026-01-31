@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-playful: var(--font-playful), "Itim", cursive;
+  --font-friendly: var(--font-friendly), "Mali", "Prompt", sans-serif;
+
+  --font-sans: var(--font-friendly);
+  --font-display: var(--font-playful);
 
   --color-background: #0a0a0b;
   --color-foreground: #ffffff;
@@ -32,6 +35,15 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
 }
 
 

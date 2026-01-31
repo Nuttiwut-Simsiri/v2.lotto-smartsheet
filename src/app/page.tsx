@@ -5,7 +5,7 @@ import AddSetNumbers from "../components/addsetnumbers";
 import UserOrders from '@/components/user-orders';
 import NRow from "../components/nrow";
 import React, { useRef } from 'react';
-import { Trash2, Search, RefreshCw, Smartphone } from 'lucide-react';
+import { Trash2, Search, Smartphone } from 'lucide-react';
 import { stringToColor } from '@/utils/colors';
 
 
@@ -44,13 +44,6 @@ export default function Home() {
           >
             <Trash2 size={20} className="group-hover:rotate-12 transition-transform" />
             <span>ลบทั้งหมด</span>
-          </button>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="p-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-2xl transition-colors"
-          >
-            <RefreshCw size={24} />
           </button>
 
           <AddSetNumbers />
@@ -114,13 +107,12 @@ export default function Home() {
           <div className="glass-card border-zinc-800/50 shadow-2xl overflow-hidden" ref={ref}>
             <div className="overflow-x-auto min-w-full">
               <div className="min-w-[600px]">
-                <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_50px] bg-zinc-900/50 border-b border-zinc-800 p-4">
+                <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr] bg-zinc-900/50 border-b border-zinc-800 p-4">
                   {tableHeaders.map((header) => (
                     <div key={header} className="text-xs font-bold text-zinc-400 uppercase tracking-widest text-center px-2">
                       {header}
                     </div>
                   ))}
-                  <div />
                 </div>
 
                 <div className="divide-y divide-zinc-800/50">
@@ -132,7 +124,6 @@ export default function Home() {
                       rowData={rowData}
                       key={rowData.id}
                       index={index}
-                      removeOrder={removeOrder}
                     />
                   ))}
 

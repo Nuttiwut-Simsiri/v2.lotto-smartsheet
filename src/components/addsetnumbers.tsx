@@ -30,7 +30,7 @@ const AddSetNumbers = () => {
                 onClick={() => onOpenModal()}
             >
                 <PlusCircle size={20} />
-                <span>เพิ่มชุดซื้อขาย</span>
+                <span>เพิ่ม</span>
             </button>
 
             <dialog id="set_number_modal" className="modal modal-middle md:modal-bottom" ref={modalRef}>
@@ -136,7 +136,7 @@ const AddSetNumbers = () => {
                                 <div className="bg-zinc-900/30 rounded-3xl border border-zinc-800 overflow-hidden flex flex-col h-full min-h-[300px]">
                                     <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr] bg-zinc-900/50 p-4 border-b border-zinc-800/50">
                                         {["ชื่อ", "เลข", "บน", "โต๊ด", "ล่าง", "รวม"].map(h => (
-                                            <div key={h} className="text-[10px] font-bold text-zinc-500 uppercase text-center">{h}</div>
+                                            <div key={h} className="text-[10px] sm:text-xs font-bold text-zinc-500 uppercase text-center">{h}</div>
                                         ))}
                                     </div>
                                     <div className="divide-y divide-zinc-900/50 overflow-y-auto max-h-[400px]">

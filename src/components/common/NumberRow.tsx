@@ -10,7 +10,7 @@ export default function NRow({ rowData }: any) {
     const botValue = rowData.bot ?? 0;
     const sumValue = rowData.sum ?? 0;
 
-    const customerColor = stringToColor(rowData.name || "Default");
+    const customerColor = rowData.color || stringToColor(rowData.name || "Default");
 
     return (
         <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr] items-center p-3 hover:bg-zinc-800/30 transition-colors group relative overflow-hidden">

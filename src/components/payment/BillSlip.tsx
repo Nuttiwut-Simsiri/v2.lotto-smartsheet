@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react';
+import { Printer, Calendar, User, ShoppingBag, CheckCircle, Wallet } from 'lucide-react';
 import { generate } from 'promptparse';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -10,209 +10,163 @@ interface BillSlipProps {
 }
 
 export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode }: BillSlipProps) => {
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const formattedTime = today.toLocaleTimeString('th-TH', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
     return (
-        <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-0 bg-white">
-            <div className="min-w-fit w-full flex justify-center bg-white">
+        <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-0 bg-slate-100">
+            <div className="min-w-fit w-full flex justify-center py-16">
                 <div
                     ref={shareRef}
                     style={{
-                        width: '780px',
-                        minWidth: '780px',
+                        width: '760px',
+                        minWidth: '760px',
                         backgroundColor: '#ffffff'
                     }}
-                    className="p-12 space-y-8 text-zinc-950 flex-shrink-0"
+                    className="p-16 space-y-12 text-[#1e293b] flex-shrink-0 relative border border-slate-200"
                 >
-                    {/* Branded Header for Image - Thai Design */}
-                    <div className="flex justify-between items-start border-b-4 border-zinc-100 pb-8">
-                        <div className="space-y-1">
-                            <h2 className="text-3xl font-black text-zinc-900 tracking-tighter">ใบสรุปยอดซื้อขาย</h2>
-                            <div className="flex items-center gap-2 text-zinc-400 font-bold">
-                                <Printer size={16} />
-                                <span className="text-xs uppercase tracking-widest">ระบบจดหวยอัตโนมัติ</span>
+                    {/* ขอบตกแต่งด้านบน */}
+                    <div className="absolute top-0 left-0 right-0 h-2 bg-[#003d6b]" />
+
+                    {/* ส่วนหัว: ข้อมูลระบบและวันที่ */}
+                    <div className="flex justify-between items-start border-b-2 border-slate-50 pb-12">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2.5 text-[#003d6b]">
+                                <Printer size={20} />
+                                <span className="text-sm font-black tracking-tight">ระบบบันทึกรายการอัตโนมัติ</span>
                             </div>
+                            <h2 className="text-4xl font-black text-[#0f172a] tracking-tight">ใบสรุปยอดสั่งซื้อ</h2>
+                        </div>
+                        <div className="text-right space-y-2">
+                            <div className="flex items-center justify-end gap-2 text-slate-400">
+                                <Calendar size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">วันที่ทำรายการ</span>
+                            </div>
+                            <p className="text-xl font-black text-[#0f172a]">{formattedDate}</p>
+                            <p className="text-sm font-bold text-slate-500">เวลา {formattedTime} น.</p>
+                        </div>
+                    </div>
+
+                    {/* การ์ดข้อมูลลูกค้า */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="p-8 bg-slate-50/50 border border-slate-100 rounded-3xl space-y-2">
+                            <div className="flex items-center gap-2 text-slate-400">
+                                <User size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest font-sans">ชื่อลูกค้า</span>
+                            </div>
+                            <h1 className="text-4xl font-black text-[#003d6b]">{selectedUser?.name}</h1>
+                        </div>
+                        <div className="p-8 bg-slate-50/50 border border-slate-100 rounded-3xl space-y-2">
+                            <div className="flex items-center gap-2 text-slate-400">
+                                <ShoppingBag size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest font-sans">รวมจำนวนรายการ</span>
+                            </div>
+                            <p className="text-4xl font-black text-[#0f172a]">{selectedUser?.details?.length || 0} <span className="text-xl text-slate-400">รายการ</span></p>
+                        </div>
+                    </div>
+
+                    {/* ตารางรายการหวย */}
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1.5fr] px-10 py-5 bg-[#003d6b] text-white rounded-2xl">
+                            {["หมายเลข", "บน", "โต๊ด", "ล่าง", "รวม (บาท)"].map((h, i) => (
+                                <div key={h} className={`text-xs font-black tracking-wide ${i === 0 ? 'text-left' : i === 4 ? 'text-right' : 'text-center'}`}>
+                                    {h}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="space-y-0 text-center">
+                            {selectedUser?.details?.map((order: any) => (
+                                <div key={order.id} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1.5fr] px-10 py-6 items-center border-b border-slate-50">
+                                    <div className="font-mono text-[#0f172a] font-black text-4xl tracking-tighter text-left">
+                                        {order.number}
+                                    </div>
+                                    <div className={`font-black text-2xl ${order.top > 0 ? 'text-[#334155]' : 'text-slate-100'}`}>{order.top || "-"}</div>
+                                    <div className={`font-black text-2xl ${order.tod > 0 ? 'text-[#64748b]' : 'text-slate-100'}`}>{order.tod || "-"}</div>
+                                    <div className={`font-black text-2xl ${order.bot > 0 ? 'text-[#94a3b8]' : 'text-slate-100'}`}>{order.bot || "-"}</div>
+                                    <div className="text-right font-black text-3xl text-[#0f172a]">
+                                        {((order.top || 0) + (order.tod || 0) + (order.bot || 0)).toLocaleString()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* สรุปยอดแยกตามประเภท */}
+                    <div className="grid grid-cols-3 gap-6 pt-6 font-sans">
+                        {[
+                            { label: 'ยอดรวม (บน)', val: categoryBreakdown.top, color: 'text-[#0ea5e9]' },
+                            { label: 'ยอดรวม (โต๊ด)', val: categoryBreakdown.tod, color: 'text-[#10b981]' },
+                            { label: 'ยอดรวม (ล่าง)', val: categoryBreakdown.bot, color: 'text-[#f59e0b]' }
+                        ].map(item => (
+                            <div key={item.label} className="bg-slate-50/30 rounded-2xl p-6 border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{item.label}</p>
+                                <p className={`text-3xl font-black ${item.color}`}>{item.val.toLocaleString()}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* ยอดชำระสุทธิ */}
+                    <div className="mt-8 bg-[#003d6b]/[0.02] border-2 border-[#003d6b] p-10 rounded-[2.5rem] flex items-center justify-between">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-[#003d6b]">
+                                <Wallet size={20} />
+                                <span className="text-sm font-black uppercase tracking-[0.2em]">จำนวนเงินสุทธิ</span>
+                            </div>
+                            <h3 className="text-2xl font-black text-[#0f172a]">ยอดที่ต้องชำระทั้งสิ้น</h3>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">วันที่ออกใบเสร็จ</p>
-                            <p className="text-lg font-black text-zinc-950">{new Date().toLocaleDateString('th-TH')}</p>
-                            <p className="text-xs font-bold text-zinc-400">{new Date().toLocaleTimeString('th-TH')} น.</p>
+                            <span className="text-8xl font-black text-[#003d6b] tracking-tighter">
+                                {selectedUser?.sum?.toLocaleString()}
+                            </span>
+                            <span className="text-3xl font-black text-[#003d6b] ml-4">บาท</span>
                         </div>
                     </div>
 
-                    {/* Customer Section - Balanced Spacing */}
-                    <div className="bg-zinc-50 rounded-[2rem] p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-zinc-100">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">ชื่อลูกค้า</p>
-                            <h1 className="text-4xl font-black text-blue-600 tracking-tight">{selectedUser?.name}</h1>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-1">จำนวนรายการ</p>
-                            <p className="text-3xl font-black text-zinc-900">{selectedUser?.details?.length || 0} รายการ</p>
-                        </div>
-                    </div>
-
-                    {/* Numbers List - Responsive Design */}
-                    <div className="space-y-6">
-                        {selectedUser?.details?.length > 10 ? (
-                            /* 2-Column Mode for Large Orders - Balanced */
-                            <div className="grid grid-cols-2 gap-x-12 gap-y-4 relative">
-                                {/* Vertical Divider Line */}
-                                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-zinc-300 -translate-x-1/2 hidden xs:block" />
-
-                                {[0, 1].map((colIndex) => {
-                                    const half = Math.ceil(selectedUser.details.length / 2);
-                                    const colDetails = selectedUser.details.slice(colIndex * half, (colIndex + 1) * half);
-                                    return (
-                                        <div key={colIndex} className="space-y-3">
-                                            <div className="grid grid-cols-[1fr_0.8fr_0.8fr_0.8fr_1fr] px-4 py-2.5 bg-zinc-100 rounded-xl">
-                                                {["เลข", "บน", "โต๊ด", "ล่าง", "รวม"].map(h => (
-                                                    <div key={h} className="text-xl font-black text-zinc-700 text-center last:text-right first:text-left">{h}</div>
-                                                ))}
-                                            </div>
-                                            <div className="space-y-2">
-                                                {colDetails.map((order: any) => (
-                                                    <div key={order.id} className="grid grid-cols-[1fr_0.8fr_0.8fr_0.8fr_1fr] px-3 py-3 rounded-xl bg-white border border-zinc-100 shadow-sm items-center">
-                                                        <div className="font-mono text-zinc-950 font-black text-xl flex items-center gap-1">
-                                                            <span className="text-zinc-300 text-xs">#</span>{order.number}
-                                                        </div>
-                                                        <div className={`text-center font-black text-base ${order.top > 0 ? 'text-blue-600' : 'text-zinc-100'}`}>{order.top || "-"}</div>
-                                                        <div className={`text-center font-black text-base ${order.tod > 0 ? 'text-emerald-600' : 'text-zinc-100'}`}>{order.tod || "-"}</div>
-                                                        <div className={`text-center font-black text-base ${order.bot > 0 ? 'text-amber-600' : 'text-zinc-100'}`}>{order.bot || "-"}</div>
-                                                        <div className="text-right font-black text-base text-zinc-950">
-                                                            {((order.top || 0) + (order.tod || 0) + (order.bot || 0)).toLocaleString()}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            /* Standard 1-Column Mode - Readable */
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1.2fr] px-6 py-4 border-b-2 border-zinc-200 bg-zinc-50/50 rounded-t-2xl">
-                                    {["หมายเลข", "บน", "โต๊ด", "ล่าง", "รวม (บาท)"].map(h => (
-                                        <div key={h} className="text-2xl font-black text-zinc-700 text-center last:text-right first:text-left">{h}</div>
-                                    ))}
-                                </div>
-                                <div className="space-y-2">
-                                    {selectedUser?.details?.map((order: any) => (
-                                        <div key={order.id} className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1.2fr] px-6 py-5 rounded-2xl bg-white border border-zinc-100 shadow-sm items-center">
-                                            <div className="font-mono text-zinc-950 font-black text-3xl flex items-center gap-2">
-                                                <span className="text-zinc-200 text-xl">#</span>{order.number}
-                                            </div>
-                                            <div className={`text-center font-black text-xl ${order.top > 0 ? 'text-blue-600' : 'text-zinc-100'}`}>{order.top || "-"}</div>
-                                            <div className={`text-center font-black text-xl ${order.tod > 0 ? 'text-emerald-600' : 'text-zinc-100'}`}>{order.tod || "-"}</div>
-                                            <div className={`text-center font-black text-xl ${order.bot > 0 ? 'text-amber-600' : 'text-zinc-100'}`}>{order.bot || "-"}</div>
-                                            <div className="text-right font-black text-2xl text-zinc-950">
-                                                {((order.top || 0) + (order.tod || 0) + (order.bot || 0)).toLocaleString()}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Category Breakdown Table - NEW SUMMARY SECTION */}
-                    <div className="pt-4 mt-4">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 flex justify-between items-center group">
-                                <div className="space-y-0.5">
-                                    <p className="text-xs font-black text-blue-400 uppercase tracking-widest">ยอดรวม (บน)</p>
-                                    <p className="text-sm font-bold text-blue-900">รวม</p>
-                                </div>
-                                <p className="text-2xl font-black text-blue-600">{categoryBreakdown.top.toLocaleString()}</p>
-                            </div>
-                            <div className="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-100 flex justify-between items-center group">
-                                <div className="space-y-0.5">
-                                    <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">ยอดรวม (โต๊ด)</p>
-                                    <p className="text-sm font-bold text-emerald-900">รวม</p>
-                                </div>
-                                <p className="text-2xl font-black text-emerald-600">{categoryBreakdown.tod.toLocaleString()}</p>
-                            </div>
-                            <div className="bg-amber-50/50 rounded-2xl p-4 border border-amber-200 flex justify-between items-center group">
-                                <div className="space-y-0.5">
-                                    <p className="text-xs font-black text-amber-400 uppercase tracking-widest">ยอดรวม (ล่าง)</p>
-                                    <p className="text-sm font-bold text-amber-900">รวม</p>
-                                </div>
-                                <p className="text-2xl font-black text-amber-600">{categoryBreakdown.bot.toLocaleString()}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Final Total - Vibrant Design */}
-                    <div className="pt-4 mt-6">
-                        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[60px] rounded-full -mr-32 -mt-32" />
-                            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 blur-[50px] rounded-full -ml-24 -mb-24" />
-                            <div className="relative flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <p className="text-xs font-black text-blue-100/60 uppercase tracking-[0.2em]">ยอดเงินรวมสุทธิ</p>
-                                    <h3 className="text-xl font-bold">จำนวนเงินที่ต้องชำระ</h3>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-6xl font-black text-white tracking-tighter drop-shadow-lg">
-                                        {selectedUser?.sum?.toLocaleString()}
-                                        <span className="text-2xl ml-3 font-bold text-blue-100">บาท</span>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* QR Code Section - Dynamic Component Design */}
+                    {/* ส่วนชำระเงิน QR Code */}
                     {showQRCode && (
-                        <div className="flex flex-col items-center justify-center pt-8 space-y-4">
-                            <div className="relative group">
-                                {/* Premium Glow Effect */}
-                                <div className="absolute -inset-4 bg-gradient-to-tr from-blue-500/10 via-transparent to-emerald-500/10 blur-3xl opacity-50"></div>
-
-                                {/* The Frame Component */}
-                                <div className="relative w-72 bg-white rounded-[3rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-100 flex flex-col items-center gap-6">
-                                    {/* PromptPay Branded Header */}
-                                    <div className="flex items-center gap-1 scale-110">
-                                        <div className="flex items-center bg-[#003d6b] px-2 py-0.5 rounded-sm">
-                                            <span className="text-[10px] font-bold text-white italic tracking-tighter">Prompt</span>
-                                            <span className="text-[10px] font-black text-[#00e3a0] ml-0.5 italic tracking-tighter">Pay</span>
-                                        </div>
-                                    </div>
-
-                                    {/* QR Code Slot - Dynamic Generation */}
-                                    <div className="w-48 h-48 bg-white rounded-3xl p-3 border-4 border-zinc-50 shadow-inner flex items-center justify-center overflow-hidden">
-                                        <QRCodeSVG
-                                            value={generate.anyId({
-                                                type: 'MSISDN',
-                                                target: process.env.NEXT_PUBLIC_PROMPTPAY_ID || "",
-                                                amount: selectedUser?.sum || 0
-                                            })}
-                                            size={160}
-                                            level="M"
-                                        />
-                                    </div>
-
-                                    {/* Thai Branding Text */}
-                                    <div className="text-center">
-                                        <h4 className="text-[#003d6b] font-black text-xl tracking-tight">ชำระเงินผ่านพร้อมเพย์</h4>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Scan to Pay</p>
+                        <div className="flex flex-col items-center gap-8 pt-12 border-t border-dashed border-slate-200 mt-12">
+                            <div className="flex flex-col items-center gap-6">
+                                <div className="flex items-center scale-125 mb-2">
+                                    <div className="flex items-center bg-[#003d6b] px-3 py-1 rounded-sm">
+                                        <span className="text-sm font-bold text-white italic tracking-tighter">Prompt</span>
+                                        <span className="text-sm font-black text-[#00e3a0] ml-0.5 italic tracking-tighter">Pay</span>
                                     </div>
                                 </div>
+                                <div className="p-4 border border-slate-100 rounded-3xl bg-white shadow-sm">
+                                    <QRCodeSVG
+                                        value={generate.anyId({
+                                            type: 'MSISDN',
+                                            target: process.env.NEXT_PUBLIC_PROMPTPAY_ID || "",
+                                            amount: selectedUser?.sum || 0
+                                        })}
+                                        size={220}
+                                        level="H"
+                                    />
+                                </div>
+                                <div className="text-center space-y-2">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">สแกนผ่านแอปพลิเคชันธนาคารเพื่อชำระเงิน</p>
+                                </div>
                             </div>
-
-                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] max-w-[250px] text-center leading-relaxed">
-                                กรุณาตรวจสอบชื่อผู้รับเงินให้ถูกต้องก่อนโอนเงินทุกครั้ง
-                            </p>
                         </div>
                     )}
 
-                    {/* Footer Thai */}
-                    <div className="py-2 border-t border-zinc-100 flex justify-between items-center text-zinc-400">
-                        <div className="flex items-center gap-1 opacity-30">
-                            <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full" />
-                            <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full" />
-                            <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full" />
+                    {/* ท้ายใบเสร็จ */}
+                    <div className="pt-20 pb-4 flex flex-col items-center gap-6 text-center">
+                        <div className="flex items-center gap-2 text-[#003d6b] font-black">
+                            <CheckCircle size={24} />
+                            <span className="text-xl tracking-tight">ขอบพระคุณที่อุดหนุนค่ะ</span>
                         </div>
-                        <p className="text-xs font-bold italic"> ขอบคุณที่อุดหนุนค่ะ ขอให้เฮงๆ รวยๆ โชคดีถูกรางวัลนะคะ 🧧✨ </p>
+                        <p className="text-sm font-bold text-slate-400 max-w-sm leading-relaxed italic">
+                            ขอให้ท่านเฮงๆ รวยๆ ถูกรางวัลใหญ่ในงวดนี้ค่ะ 🧧✨
+                        </p>
                     </div>
                 </div>
             </div>

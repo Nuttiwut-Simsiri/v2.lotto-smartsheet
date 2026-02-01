@@ -1,8 +1,8 @@
-
-export const stringToColor = (str: string) => {
+export const stringToColor = (str: string, seed: string | number = "") => {
+    let combined = str + String(seed);
     let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < combined.length; i++) {
+        hash = combined.charCodeAt(i) + ((hash << 5) - hash);
     }
 
     // We want colors that look good in dark mode (not too dark, not too bright)

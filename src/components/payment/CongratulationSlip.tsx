@@ -1,124 +1,132 @@
 import { useRef } from "react";
-import { BillSlip } from "./BillSlip";
-import { useMainStore } from "@/hooks/useMainStore";
-import { Trophy, Star, PartyPopper, Printer } from 'lucide-react';
+import { Trophy, Calendar, User, Star, CheckCircle, Wallet } from 'lucide-react';
 
 interface CongratulationSlipProps {
     selectedUser: any;
 }
 
 export const CongratulationSlip = ({ selectedUser }: CongratulationSlipProps) => {
-    const orders = useMainStore((state) => state.orders)
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
     return (
-        <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-0 bg-zinc-900/50">
-            <div className="min-w-fit w-full flex justify-center py-10">
+        <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-0 bg-slate-50 font-sans">
+            <div className="min-w-fit w-full flex justify-center py-16">
                 <div
                     ref={useRef(null)}
                     style={{
-                        width: '800px',
-                        minWidth: '800px',
-                        background: 'linear-gradient(135deg, #ffffff 0%, #fffbf0 100%)',
-                        position: 'relative',
-                        overflow: 'hidden'
+                        width: '760px',
+                        minWidth: '760px',
+                        backgroundColor: '#ffffff'
                     }}
-                    className="p-12 space-y-10 text-zinc-950 flex-shrink-0 rounded-p shadow-2xl"
+                    className="p-16 space-y-12 text-[#1e293b] flex-shrink-0 relative border border-amber-100"
                 >
-                    {/* Golden Decorative Elements */}
-                    <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-100 rounded-full opacity-50 blur-3xl animate-pulse" />
-                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-amber-50 rounded-full opacity-50 blur-3xl animate-pulse" />
+                    {/* ขอบตกแต่งด้านบน - สีทองหรูหรา */}
+                    <div className="absolute top-0 left-0 right-0 h-2 bg-[#d97706]" />
 
-                    {/* Confetti Decors (Simulated with div stars) */}
-                    <Star className="absolute top-10 right-20 text-amber-400 opacity-30 animate-bounce" size={24} />
-                    <Star className="absolute bottom-20 left-10 text-amber-500 opacity-20 animate-spin" size={16} />
-                    <PartyPopper className="absolute top-1/2 -right-4 text-amber-600 opacity-10" size={120} />
+                    {/* ส่วนหัว: แสดงความยินดีและวันที่ */}
+                    <div className="flex justify-between items-start border-b-2 border-amber-50 pb-12">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 text-[#d97706]">
+                                <Trophy size={28} />
+                                <span className="text-sm font-black tracking-tight uppercase">สถานะรางวัล</span>
+                            </div>
+                            <h2 className="text-5xl font-black text-[#78350f] tracking-tight">ขอแสดงความยินดี!</h2>
+                        </div>
+                        <div className="text-right space-y-2">
+                            <div className="flex items-center justify-end gap-2 text-amber-600/50">
+                                <Calendar size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">วันที่ออกรางวัล</span>
+                            </div>
+                            <p className="text-xl font-black text-[#78350f]">{formattedDate}</p>
+                            <div className="flex justify-end gap-1">
+                                <Star size={12} className="fill-amber-400 text-amber-400" />
+                                <Star size={12} className="fill-amber-400 text-amber-400" />
+                                <Star size={12} className="fill-amber-400 text-amber-400" />
+                            </div>
+                        </div>
+                    </div>
 
-                    {/* Branded Header */}
-                    <div className="flex justify-between items-start border-b-2 border-amber-100 pb-8 relative z-10">
+                    {/* การ์ดข้อมูลผู้โชคดี */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="p-10 bg-amber-50/30 border border-amber-100 rounded-[2.5rem] space-y-2">
+                            <div className="flex items-center gap-2 text-amber-600/60">
+                                <User size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">คุณลูกค้าผู้โชคดี</span>
+                            </div>
+                            <h1 className="text-5xl font-black text-[#78350f] truncate">{selectedUser?.name}</h1>
+                        </div>
+                        <div className="p-10 bg-amber-600 border border-amber-700 rounded-[2.5rem] space-y-2 text-white shadow-lg shadow-amber-600/20">
+                            <div className="flex items-center gap-2 opacity-80">
+                                <Star size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">สถานะรางวัล</span>
+                            </div>
+                            <p className="text-4xl font-black text-center">ถูกรางวัล!</p>
+                        </div>
+                    </div>
+
+                    {/* ตารางรายละเอียดรางวัล */}
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-3 px-10 py-5 bg-[#78350f] text-white rounded-2xl">
+                            {["หมายเลขที่ถูก", "ประเภทการซื้อ", "เงินรางวัล (บาท)"].map((h, i) => (
+                                <div key={h} className={`text-xs font-black tracking-wide ${i === 0 ? 'text-left' : i === 2 ? 'text-right' : 'text-center'}`}>
+                                    {h}
+                                </div>
+                            ))}
+                        </div>
                         <div className="space-y-1">
-                            <h2 className="text-4xl font-display font-black text-amber-700 tracking-tighter flex items-center gap-2">
-                                <Trophy size={40} className="text-amber-500" />
-                                ยินดีด้วยค่ะ!
-                            </h2>
-                            <div className="flex items-center gap-2 text-zinc-400 font-bold">
-                                <Printer size={16} />
-                                <span className="text-xs uppercase tracking-widest font-friendly">ระบบสรุปยอดรางวัลอัตโนมัติ</span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-amber-600/50 uppercase tracking-widest mb-1">บริการแจ้งผลรางวัลยอดเฮง</p>
-                            <p className="text-2xl font-black text-zinc-950 font-display">{new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            {selectedUser?.details?.map((detail: any, idx: number) => (
+                                <div key={idx} className="grid grid-cols-3 px-10 py-7 items-center border-b border-amber-50">
+                                    <div className="font-mono text-[#0f172a] font-black text-4xl tracking-tighter">
+                                        {detail.number}
+                                    </div>
+                                    <div className="text-center font-bold text-xl text-amber-600/70">{detail.buyAmountLabel}</div>
+                                    <div className="text-right font-black text-4xl text-[#78350f]">
+                                        {detail.rewardPrice?.toLocaleString()}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Main Content Area */}
-                    <div className="text-center space-y-10 relative z-10">
-                        <div className="space-y-2">
-                            <p className="text-lg font-bold text-amber-600 uppercase tracking-[0.3em] font-display">สุดยอดความเฮง! ขอแสดงความยินดีกับคุณ</p>
-                            <h1 className="text-7xl font-black text-zinc-900 tracking-tight font-display drop-shadow-sm">
-                                {selectedUser?.name}
-                            </h1>
-                        </div>
-
-                        <div className="relative inline-block px-20 py-8">
-                            <div className="absolute inset-0 bg-amber-500 transform -skew-x-12 rounded-[2rem] shadow-2xl shadow-amber-500/40" />
-                            <h2 className="relative text-6xl font-black text-white font-display tracking-widest animate-bounce">
-                                คุณถูกรางวัล!
-                            </h2>
-                        </div>
-
-                        <div className="bg-white/60 backdrop-blur-sm border-2 border-amber-100 rounded-[3rem] p-12 shadow-inner space-y-10">
-                            {/* Detailed Win List */}
-                            <div className="space-y-5">
-                                <div className="grid grid-cols-3 px-6 py-2 text-xs font-black text-amber-700 uppercase tracking-widest border-b-2 border-amber-200">
-                                    <div>หมายเลขที่ถูก</div>
-                                    <div className="text-center">ประเภท</div>
-                                    <div className="text-right">รางวัลที่ได้</div>
-                                </div>
-                                <div className="space-y-3">
-                                    {selectedUser?.details?.map((detail: any, idx: number) => (
-                                        <div key={idx} className="grid grid-cols-3 px-6 py-4 bg-white/50 rounded-2xl items-center border border-amber-100 shadow-sm">
-                                            <div className="text-3xl font-black text-zinc-900 font-display">{detail.number}</div>
-                                            <div className="text-base font-bold text-zinc-500 text-center italic">{detail.buyAmountLabel}</div>
-                                            <div className="text-2xl font-black text-amber-600 text-right font-display">
-                                                {detail.rewardPrice?.toLocaleString()}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                    {/* สรุปยอดเงินรางวัลรวม */}
+                    <div className="mt-8 bg-amber-50/50 border-2 border-[#d97706] p-12 rounded-[3rem] flex items-center justify-between relative overflow-hidden">
+                        <div className="relative z-10 space-y-2">
+                            <div className="flex items-center gap-2 text-[#d97706]">
+                                <Wallet size={20} />
+                                <span className="text-sm font-black uppercase tracking-[0.2em]">สรุปยอดรับเงิน</span>
                             </div>
-
-                            {/* Overall Summary */}
-                            <div className="grid grid-cols-2 gap-10 pt-10 border-t-2 border-amber-100">
-                                <div className="space-y-2">
-                                    <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest font-friendly">จำนวนที่ถูกรางวัล</p>
-                                    <p className="text-5xl font-black text-zinc-900 font-display">
-                                        {selectedUser?.details?.length || 0} <span className="text-xl text-zinc-400 font-bold uppercase">รายการ</span>
-                                    </p>
-                                </div>
-                                <div className="space-y-2">
-                                    <p className="text-sm font-bold text-amber-600 uppercase tracking-widest font-friendly">ยอดเงินรางวัลรวมทั้งสิ้น</p>
-                                    <p className="text-6xl font-black text-emerald-600 font-display drop-shadow-sm">
-                                        {selectedUser?.rewardPrice?.toLocaleString()} <span className="text-xl text-zinc-400 font-bold">บาท</span>
-                                    </p>
-                                </div>
-                            </div>
+                            <h3 className="text-2xl font-black text-[#78350f]">รวมเงินรางวัลทั้งสิ้น</h3>
                         </div>
+                        <div className="relative z-10 text-right">
+                            <span className="text-8xl font-black text-[#d97706] tracking-tighter whitespace-nowrap">
+                                {selectedUser?.rewardPrice?.toLocaleString()}
+                            </span>
+                            <span className="text-3xl font-black text-[#d97706] ml-4">บาท</span>
+                        </div>
+                        {/* ของตกแต่งแบบเรียบ (Render ปลอดภัย) */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/30 rounded-full -mr-16 -mt-16" />
                     </div>
 
-                    {/* Footer Blessing */}
-                    <div className="pt-10 border-t-2 border-amber-100 space-y-6 relative z-10">
-                        <div className="flex justify-center items-center gap-8">
-                            <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent to-amber-300" />
-                            <p className="text-3xl font-bold italic text-amber-700 font-friendly px-6">
-                                " เฮงๆ รวยๆ ปังๆ จ้าาา "
+                    {/* ท้ายสลิปและคำอวยพร */}
+                    <div className="pt-20 pb-4 flex flex-col items-center gap-8 text-center">
+                        <div className="flex items-center gap-2 text-[#d97706] font-black">
+                            <CheckCircle size={28} />
+                            <span className="text-2xl tracking-tight">ได้รับโชคใหญ่ เฮงปังที่สุดค่ะ!</span>
+                        </div>
+                        <div className="space-y-3">
+                            <p className="text-lg font-bold text-[#78350f] leading-relaxed">
+                                " ขอให้ท่านมีความสุขและโชคดี ถูกรางวัลใหญ่ในทุกๆ งวดนะคะ "
                             </p>
-                            <div className="h-[2px] flex-1 bg-gradient-to-l from-transparent to-amber-300" />
+                            <p className="text-sm font-bold text-amber-400 italic">
+                                ขอบพระคุณที่อุดหนุนค่ะ ✨
+                            </p>
                         </div>
-
-                        <div className="flex justify-between items-center text-xs font-bold text-zinc-400 uppercase tracking-widest px-4">
-                            <p>ขอบคุณที่อุดหนุนค่ะ</p>
-                            <p>ขอให้โชคดี ถูกรางวัลตลอดไปนะคะ</p>
-                        </div>
+                        <div className="w-24 h-1 bg-amber-50 rounded-full" />
                     </div>
                 </div>
             </div>

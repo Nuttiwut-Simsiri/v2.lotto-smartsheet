@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from "zustand/middleware";
 import { Order, SummaryOrder, NewOrder } from '../model/order';
 import { nanoid } from 'nanoid'
+import { stringToColor } from '@/utils/colors';
 
 
 const groupBy = (items: any, key: string) => items.reduce(
@@ -41,6 +42,8 @@ interface OrderState {
     onPaidOrder: (checked: boolean, id: string) => void;
     makePreviewOrder: (OrderType: string, timestmap: number, defaultColor: string) => void;
     makePreviewOrderForUser: (OrderType: string, timestmap: number, defaultColor: string) => void;
+    updateCustomerName: (oldName: string, newName: string, color?: string) => void;
+    refreshColor: () => void;
     summarize: () => void;
     clearPreviewOrder: () => void;
 }
@@ -99,9 +102,10 @@ export const useMainStore = create<OrderState>()(
                 set((state) => ({
                     orders: historyData.orders,
                 }));
-                set((state) => ({
-                    uniqOrder: [...new Map(state.orders.map(item => [item["name"], item])).values()].filter(el => el.name)
-                }));
+                const orders = get().orders;
+                set({
+                    uniqOrder: [...new Map(orders.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                });
                 get().summarize()
                 set({ isloaded: true })
             },
@@ -146,9 +150,9 @@ export const useMainStore = create<OrderState>()(
                         return {
                             ...groupedNumber[n][0],
                             ...{
-                                top: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + object.top, 0),
-                                bot: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + object.bot, 0),
-                                tod: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + object.tod, 0)
+                                top: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.top || 0), 0),
+                                bot: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.bot || 0), 0),
+                                tod: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.tod || 0), 0)
                             }
                         }
                     })
@@ -161,9 +165,9 @@ export const useMainStore = create<OrderState>()(
                     orders: final_result,
                 }));
 
-                set((state) => ({
-                    uniqOrder: [...new Map(state.orders.map(item => [item["name"], item])).values()].filter(el => el.name)
-                }));
+                set({
+                    uniqOrder: [...new Map(final_result.map((item: any) => [`${item.name}-${item.color}`, item])).values()].filter((el: any) => el.name) as Order[]
+                });
 
                 // sort order by timestamp
                 set((state) => ({
@@ -175,9 +179,6 @@ export const useMainStore = create<OrderState>()(
                 set((state) => ({
                     orders: state.orders.sort((a: any, b: any) => (uo.findIndex((el: any) => el?.name == a?.name) - uo.findIndex((el: any) => el?.name == b?.name))),
                 }));
-
-
-
 
                 get().summarize()
 
@@ -195,9 +196,9 @@ export const useMainStore = create<OrderState>()(
                         return {
                             ...groupedNumber[n][0],
                             ...{
-                                top: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + object.top, 0),
-                                bot: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + object.bot, 0),
-                                tod: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + object.tod, 0)
+                                top: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.top || 0), 0),
+                                bot: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.bot || 0), 0),
+                                tod: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.tod || 0), 0)
                             }
                         }
                     })
@@ -206,16 +207,14 @@ export const useMainStore = create<OrderState>()(
 
                 }).flat()
 
-                console.log(final_result)
-
                 set((state) => ({
                     orders: final_result,
                 }));
 
                 // get unique user
-                set((state) => ({
-                    uniqOrder: [...new Map(state.orders.map(item => [item["name"], item])).values()].filter(el => el.name)
-                }));
+                set({
+                    uniqOrder: [...new Map(final_result.map((item: any) => [`${item.name}-${item.color}`, item])).values()].filter((el: any) => el.name) as Order[]
+                });
 
                 // sort order by timestamp
                 set((state) => ({
@@ -228,17 +227,15 @@ export const useMainStore = create<OrderState>()(
                     orders: state.orders.sort((a: any, b: any) => (uo.findIndex((el: any) => el?.name == a?.name) - uo.findIndex((el: any) => el?.name == b?.name))),
                 }));
 
-
-
                 get().summarize()
 
             },
             removeOrder: (id: string) => {
                 const removedData = get().orders.filter((el) => el.id != id)
-                set((state) => ({
+                set({
                     orders: removedData,
-                    uniqOrder: [...new Map(removedData?.map(item => [item["name"], item])).values()].filter(el => el.name)
-                }));
+                    uniqOrder: [...new Map(removedData?.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                });
                 get().summarize()
             },
             removeAllOrder: () => {
@@ -249,23 +246,54 @@ export const useMainStore = create<OrderState>()(
                 get().summarize()
             },
             editOrder: (newData: object, index: number) => {
-                var temp = get().orders
+                var temp = [...get().orders]
                 temp[index] = { ...temp[index], ...newData }
-                set((state) => ({
+                set({
                     orders: temp,
-                    uniqOrder: [...new Map(temp.map(item => [item["name"], item])).values()].filter(el => el.name)
-                }));
+                    uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                });
                 get().summarize()
             },
+            updateCustomerName: (oldName: string, newName: string, color?: string) => {
+                if (!newName || oldName === newName) return;
+
+                const updatedOrders = get().orders.map(order => {
+                    const matchesName = order.name === oldName;
+                    const matchesColor = color ? order.color === color : true;
+                    return (matchesName && matchesColor) ? { ...order, name: newName } : order;
+                });
+
+                const updatedSummary = get().summaryOrders.map(summary => {
+                    const matchesName = summary.name === oldName;
+                    const matchesColor = color ? (summary as any).color === color : true;
+                    return (matchesName && matchesColor) ? { ...summary, name: newName } : summary
+                });
+
+                set({
+                    orders: updatedOrders,
+                    summaryOrders: updatedSummary,
+                    uniqOrder: [...new Map(updatedOrders.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[],
+                    filterKeyword: get().filterKeyword === oldName ? newName : get().filterKeyword
+                });
+
+                get().summarize();
+            },
+
             changeColor: (newData: object, name: string) => {
                 var temp = get().orders.map((el, index) => {
                     return el.name == name ? { ...get().orders[index], ...newData } : get().orders[index]
                 })
-                set((state) => ({
+                set({
                     orders: temp,
-                    uniqOrder: [...new Map(temp.map(item => [item["name"], item])).values()].filter(el => el.name)
-                }));
+                    uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                });
                 get().summarize()
+            },
+            refreshColor: () => {
+                const name = get().newOrders.name;
+                const tm = Date.now();
+                const newColor = stringToColor(name, tm);
+                get().editNewOrder({ color: newColor, tm });
             },
 
             editNewOrder: (newData: any) => {
@@ -291,7 +319,6 @@ export const useMainStore = create<OrderState>()(
             makePreviewOrder: (OrderType: string, timestamp: number, defaultColor: string = "#fefefe") => {
                 const nOrder = get().newOrders
                 const setNumber: string[] = nPermute(nOrder?.number.split(""))
-                console.log("setNumber :: ", setNumber)
                 switch (OrderType) {
                     case "บน":
                         set((state) => ({
@@ -521,7 +548,6 @@ export const useMainStore = create<OrderState>()(
             makePreviewOrderForUser: (OrderType: string, timestamp: number, defaultColor: string = "#fefefe") => {
                 const nOrder = get().newOrders
                 const setNumber: string[] = nPermute(nOrder?.number.split(""))
-                console.log("ForUser : setNumber :: ", setNumber)
                 switch (OrderType) {
                     case "บน":
                         set((state) => ({
@@ -715,34 +741,36 @@ export const useMainStore = create<OrderState>()(
             },
             summarize: () => {
                 const tempOrders: Order[] = [...get().orders]
-
-                const groupedOrders: any = groupBy(tempOrders, "name")
+                const groupedByComposite: any = {}
+                tempOrders.forEach(order => {
+                    const key = `${order.name}-${order.color}`
+                    if (!groupedByComposite[key]) groupedByComposite[key] = []
+                    groupedByComposite[key].push(order)
+                })
 
                 const prevSummaryOrders = get().summaryOrders;
                 var tempSummmaryOrder: any = []
 
-                Object.keys(groupedOrders).forEach((key: string) => {
-                    if (key) {
-                        const allTop = groupedOrders[key].reduce((accumulator: any, object: any) => {
-                            return accumulator + object.top;
-                        }, 0)
-                        const allTod = groupedOrders[key].reduce((accumulator: any, object: any) => {
-                            return accumulator + object.tod;
-                        }, 0)
-                        const allBot = groupedOrders[key].reduce((accumulator: any, object: any) => {
-                            return accumulator + object.bot;
-                        }, 0)
+                Object.keys(groupedByComposite).forEach((key: string) => {
+                    const currentGroup = groupedByComposite[key]
+                    const firstOrder = currentGroup[0]
+                    const name = firstOrder.name
+                    const color = firstOrder.color
 
-                        const allNUm: string[] = groupedOrders[key].map((el: any) => el.number)
+                    if (name) {
+                        const allTop = currentGroup.reduce((acc: any, obj: any) => acc + (obj.top || 0), 0)
+                        const allTod = currentGroup.reduce((acc: any, obj: any) => acc + (obj.tod || 0), 0)
+                        const allBot = currentGroup.reduce((acc: any, obj: any) => acc + (obj.bot || 0), 0)
+                        const allNum: string[] = currentGroup.map((el: any) => el.number)
 
-                        // Look for existing paid status for this customer
-                        const existingSummary = prevSummaryOrders.find(s => s.name === key);
+                        const existingSummary = prevSummaryOrders.find(s => s.name === name && (s as any).color === color);
                         const isPaid = existingSummary ? existingSummary.isPaid : false;
 
-                        var temp: SummaryOrder = {
+                        var temp: any = {
                             id: existingSummary ? existingSummary.id : nanoid(),
-                            name: key,
-                            number: allNUm.join(" "),
+                            name: name,
+                            color: color,
+                            number: allNum.join(" "),
                             top: allTop,
                             tod: allTod,
                             bot: allBot,
@@ -763,10 +791,13 @@ export const useMainStore = create<OrderState>()(
 
                 var orderCnt = 0
                 const addedSumOrder = tempOrders.map((order: Order, index: number) => {
-                    const prevName = index - 1 > 0 ? tempOrders[index - 1]?.name : tempOrders[0]?.name
-                    orderCnt = order?.name === prevName ? orderCnt + 1 : 1
-                    const resultSum: SummaryOrder[] = tempSummmaryOrder?.filter((elSum: SummaryOrder) => order?.name === elSum?.name)
-                    return resultSum.length > 0 && orderCnt === groupedOrders[order?.name].length ? { ...order, ...{ sum: resultSum[0]?.sum } } : { ...order, ...{ sum: 0 } }
+                    const prevKey = index - 1 >= 0 ? `${tempOrders[index - 1]?.name}-${tempOrders[index - 1]?.color}` : `${tempOrders[0]?.name}-${tempOrders[0]?.color}`
+                    const currentKey = `${order.name}-${order.color}`
+
+                    orderCnt = currentKey === prevKey ? orderCnt + 1 : 1
+                    const resultSum = tempSummmaryOrder?.filter((elSum: any) => currentKey === `${elSum?.name}-${elSum?.color}`)
+
+                    return resultSum.length > 0 && orderCnt === (groupedByComposite[currentKey]?.length || 0) ? { ...order, ...{ sum: resultSum[0]?.sum } } : { ...order, ...{ sum: 0 } }
                 })
 
                 set((state) => ({

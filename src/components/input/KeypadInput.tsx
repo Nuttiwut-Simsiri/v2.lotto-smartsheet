@@ -2,7 +2,8 @@
 import { useMainStore } from "@/hooks/useMainStore";
 import useCustomStore from "@/hooks/useCustomStore";
 import { useRef } from "react";
-import { PlusCircle, X, User, Hash, Coins, Settings2, Eye } from "lucide-react";
+import { PlusCircle, X, User, Hash, Coins, Settings2, Eye, RefreshCcw } from "lucide-react";
+import { stringToColor } from "@/utils/colors";
 
 const AddSetNumbers = () => {
     const modalRef = useRef<HTMLDialogElement>(null);
@@ -12,9 +13,13 @@ const AddSetNumbers = () => {
     const editNewOrder = useMainStore((state) => state.editNewOrder)
     const makePreviewOrder = useMainStore((state) => state.makePreviewOrder)
     const addOrder = useMainStore((state) => state.addOrder)
+    const refreshColor = useMainStore((state) => state.refreshColor)
 
     const onOpenModal = () => {
-        makePreviewOrder(newOrders?.setType || "บน", Date.now(), "#fefefe")
+        const tm = Date.now();
+        const initialColor = stringToColor(newOrders?.name || "Luffy", tm);
+        editNewOrder({ color: initialColor, tm });
+        makePreviewOrder(newOrders?.setType || "บน", tm, initialColor)
         modalRef.current?.showModal()
     }
 
@@ -59,16 +64,31 @@ const AddSetNumbers = () => {
                             {/* Form Section */}
                             <div className="space-y-8">
                                 <div className="space-y-3">
-                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                        <User size={14} className="text-blue-500/50" /> ชื่อลูกค้า
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="ระบุชื่อลูกค้า..."
-                                        className="w-full bg-zinc-900/50 border border-zinc-800/50 rounded-2xl px-5 py-4 text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder-zinc-700 text-lg"
-                                        defaultValue={newOrders?.name}
-                                        onChange={(ev) => editNewOrder({ name: ev.target.value })}
-                                    />
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <User size={14} className="text-blue-500/50" /> ชื่อลูกค้า
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => refreshColor()}
+                                            className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 hover:text-blue-400 transition-colors uppercase tracking-widest bg-zinc-900 px-2 py-1 rounded-lg border border-zinc-800"
+                                        >
+                                            <RefreshCcw size={10} /> สลับสี
+                                        </button>
+                                    </div>
+                                    <div className="relative group/name">
+                                        <input
+                                            type="text"
+                                            placeholder="ระบุชื่อลูกค้า..."
+                                            className="w-full bg-zinc-900/50 border border-zinc-800/50 rounded-2xl px-5 py-4 pl-14 text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder-zinc-700 text-lg"
+                                            defaultValue={newOrders?.name}
+                                            onChange={(ev) => editNewOrder({ name: ev.target.value })}
+                                        />
+                                        <div
+                                            className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full shadow-lg shadow-black/20 border border-white/10 transition-transform group-hover/name:scale-110"
+                                            style={{ backgroundColor: newOrders?.color }}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-5">

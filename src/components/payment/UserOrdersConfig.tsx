@@ -17,7 +17,7 @@ const UserOrdersConfig = ({ username, hColor }: { username: string, hColor: stri
     const summarize = useMainStore((state) => state.summarize)
     const clearPreviewOrder = useMainStore((state) => state.clearPreviewOrder)
 
-    const historyOrder = orders?.filter((el: any) => el.name === username)
+    const historyOrder = orders?.filter((el: any) => el.name === username && el.color === hColor)
 
     const onOpenModal = () => {
         makePreviewOrderForUser(newOrders?.setType || "บน", Date.now(), hColor)

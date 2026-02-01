@@ -1,6 +1,7 @@
 import { Printer, Calendar, User, ShoppingBag, CheckCircle, Wallet } from 'lucide-react';
 import { generate } from 'promptparse';
 import { QRCodeSVG } from 'qrcode.react';
+import { useMemo } from 'react';
 
 interface BillSlipProps {
     shareRef: React.RefObject<HTMLDivElement | null>;
@@ -11,15 +12,26 @@ interface BillSlipProps {
 
 export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode }: BillSlipProps) => {
     const today = new Date();
-    const formattedDate = today.toLocaleDateString('th-TH', {
+
+    const formattedDate = useMemo(() => today.toLocaleDateString('th-TH', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-    });
-    const formattedTime = today.toLocaleTimeString('th-TH', {
+    }), []);
+
+    const formattedTime = useMemo(() => today.toLocaleTimeString('th-TH', {
         hour: '2-digit',
         minute: '2-digit'
-    });
+    }), []);
+
+    const qrValue = useMemo(() => {
+        if (!selectedUser?.sum || !showQRCode) return "";
+        return generate.anyId({
+            type: 'MSISDN',
+            target: process.env.NEXT_PUBLIC_PROMPTPAY_ID || "",
+            amount: selectedUser?.sum || 0
+        });
+    }, [selectedUser?.sum, showQRCode]);
 
     return (
         <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-0 bg-slate-100">
@@ -77,7 +89,7 @@ export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode
                     <div className="space-y-4">
                         <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1.5fr] px-10 py-5 bg-[#003d6b] text-white rounded-2xl">
                             {["หมายเลข", "บน", "โต๊ด", "ล่าง", "รวม (บาท)"].map((h, i) => (
-                                <div key={h} className={`text-xs font-black tracking-wide ${i === 0 ? 'text-left' : i === 4 ? 'text-right' : 'text-center'}`}>
+                                <div key={h} className={`text-base font-black tracking-wide ${i === 0 ? 'text-left' : i === 4 ? 'text-right' : 'text-center'}`}>
                                     {h}
                                 </div>
                             ))}
@@ -130,29 +142,29 @@ export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode
                         </div>
                     </div>
 
-                    {/* ส่วนชำระเงิน QR Code */}
+                    {/* ส่วนชำระเงิน QR Code (Redesigned for 100% Render Accuracy) */}
                     {showQRCode && (
-                        <div className="flex flex-col items-center gap-8 pt-12 border-t border-dashed border-slate-200 mt-12">
-                            <div className="flex flex-col items-center gap-6">
-                                <div className="flex items-center scale-125 mb-2">
-                                    <div className="flex items-center bg-[#003d6b] px-3 py-1 rounded-sm">
-                                        <span className="text-sm font-bold text-white italic tracking-tighter">Prompt</span>
-                                        <span className="text-sm font-black text-[#00e3a0] ml-0.5 italic tracking-tighter">Pay</span>
-                                    </div>
+                        <div className="flex flex-col items-center gap-10 pt-16 border-t border-dashed border-slate-200 mt-12 bg-slate-50/50 -mx-16 px-16 pb-16">
+                            <div className="flex flex-col items-center gap-8">
+                                {/* PromptPay Logo - Flat Design */}
+                                <div className="flex items-center bg-[#003d6b] px-6 py-2 rounded-lg">
+                                    <span className="text-xl font-black text-white italic tracking-tighter">Prompt</span>
+                                    <span className="text-xl font-black text-[#00e3a0] ml-1 italic tracking-tighter">Pay</span>
                                 </div>
-                                <div className="p-4 border border-slate-100 rounded-3xl bg-white shadow-sm">
+
+                                {/* QR Code Container - Solid Border (No Shadows/Blurs) */}
+                                <div className="p-6 border-4 border-[#003d6b] rounded-[2rem] bg-white relative">
                                     <QRCodeSVG
-                                        value={generate.anyId({
-                                            type: 'MSISDN',
-                                            target: process.env.NEXT_PUBLIC_PROMPTPAY_ID || "",
-                                            amount: selectedUser?.sum || 0
-                                        })}
-                                        size={220}
+                                        value={qrValue}
+                                        size={240}
                                         level="H"
                                     />
+
                                 </div>
-                                <div className="text-center space-y-2">
-                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">สแกนผ่านแอปพลิเคชันธนาคารเพื่อชำระเงิน</p>
+
+                                <div className="text-center space-y-3">
+                                    <p className="text-sm font-black text-[#003d6b] uppercase tracking-[0.2em]">สแกนเพื่อชำระเงิน</p>
+                                    <div className="h-1 w-12 bg-[#00e3a0] mx-auto rounded-full" />
                                 </div>
                             </div>
                         </div>

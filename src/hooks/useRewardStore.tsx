@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from "zustand/middleware";
-import { HPNumbersProps, Rewards } from '@/model/rewards';
+import { HPNumbersProps, Rewards } from '@/types/rewards';
 
 interface RewardnHPNumbersState {
     rewards: Rewards;

@@ -2,7 +2,7 @@
 import useCustomStore from "@/hooks/useCustomStore";
 import { useRewardnHPStore } from "@/hooks/useRewardStore";
 import { useMainStore } from "@/hooks/useMainStore";
-import { Rewards, HPNumbersProps } from "@/model/rewards";
+import { Rewards, HPNumbersProps } from "@/types/rewards";
 import { useEffect, useState } from "react";
 import { CreditCard, Trophy, CheckCircle2, AlertTriangle, Hash, Share2, Printer, Eye } from "lucide-react";
 import { CongratulationModal } from "@/components/payment/CongratulationModal";

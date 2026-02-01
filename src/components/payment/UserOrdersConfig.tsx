@@ -26,9 +26,12 @@ const UserOrdersConfig = ({ username, hColor }: { username: string, hColor: stri
         editNewOrder({ name: username })
     }
 
-    const handleAddOrder = (ev: React.MouseEvent<HTMLElement>) => {
+    const numInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAddOrder = (ev: React.MouseEvent<HTMLElement> | React.KeyboardEvent) => {
         ev.preventDefault()
         addOrder()
+        setTimeout(() => numInputRef.current?.focus(), 10);
     }
 
     const handleRemoveOrder = (ev: React.MouseEvent<HTMLElement>, id: string) => {
@@ -93,6 +96,7 @@ const UserOrdersConfig = ({ username, hColor }: { username: string, hColor: stri
                                             <Hash size={14} className="text-blue-500/50" /> ตัวเลข
                                         </label>
                                         <input
+                                            ref={numInputRef}
                                             type="text"
                                             inputMode="numeric"
                                             placeholder="00"
@@ -101,6 +105,9 @@ const UserOrdersConfig = ({ username, hColor }: { username: string, hColor: stri
                                             maxLength={3}
                                             value={newOrders?.number || ""}
                                             onChange={(ev) => editNewOrder({ number: ev.target.value })}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleAddOrder(e);
+                                            }}
                                         />
                                     </div>
                                     <div className="space-y-3">
@@ -164,7 +171,30 @@ const UserOrdersConfig = ({ username, hColor }: { username: string, hColor: stri
                                             <div key={h} className="text-[10px] sm:text-xs font-bold text-zinc-500 uppercase text-center">{h}</div>
                                         ))}
                                     </div>
-                                    <div className="divide-y divide-zinc-900/50 overflow-y-auto max-h-[450px]">
+                                    <div className="divide-y divide-zinc-900/50 overflow-y-auto max-h-[450px] custom-scrollbar">
+                                        {/* New Preview Section (At the top) */}
+                                        {previewOrderForUser && previewOrderForUser.length > 0 && (
+                                            <div className="bg-emerald-500/10 border-b border-emerald-500/20 sticky top-0 z-10 backdrop-blur-md">
+                                                <div className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] px-4 py-2 bg-emerald-500/5 flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                                                    กำลังจะเพิ่มใหม่
+                                                </div>
+                                                {previewOrderForUser.map((el: any) => (
+                                                    <div key={el.id} className="grid grid-cols-[1fr_0.8fr_0.8fr_0.8fr_0.8fr_40px] p-4 text-center items-center italic bg-emerald-500/5">
+                                                        <div className="font-mono text-emerald-400 font-bold text-lg">{el.number}</div>
+                                                        <div className="text-xs text-emerald-500/80">{el.top || 0}</div>
+                                                        <div className="text-xs text-emerald-500/80">{el.tod || 0}</div>
+                                                        <div className="text-xs text-emerald-500/80">{el.bot || 0}</div>
+                                                        <div className="text-xs font-bold text-emerald-400">{el.sum || 0}</div>
+                                                        <div className="flex justify-center">
+                                                            <div className="w-1.5 h-1.5 bg-emerald-500/50 rounded-full" />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* History list */}
                                         {historyOrder?.map((el: any) => (
                                             <div key={el.id} className="grid grid-cols-[1fr_0.8fr_0.8fr_0.8fr_0.8fr_40px] p-4 text-center items-center hover:bg-white/[0.02] transition-colors">
                                                 <div className="font-mono text-blue-400 font-bold text-base">{el.number}</div>
@@ -174,30 +204,12 @@ const UserOrdersConfig = ({ username, hColor }: { username: string, hColor: stri
                                                 <div className="text-xs font-bold text-white">{el.sum || 0}</div>
                                                 <button
                                                     onClick={(ev) => handleRemoveOrder(ev, el.id)}
-                                                    className="text-red-500/50 hover:text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+                                                    className="text-red-500/30 hover:text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-all mx-auto"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         ))}
-
-                                        {previewOrderForUser && previewOrderForUser.length > 0 && (
-                                            <div className="bg-emerald-500/5 border-y border-emerald-500/10">
-                                                <div className="text-[10px] font-bold text-emerald-500/50 uppercase tracking-widest px-4 py-2 bg-emerald-500/5">
-                                                    กำลังจะเพิ่มใหม่
-                                                </div>
-                                                {previewOrderForUser.map((el: any) => (
-                                                    <div key={el.id} className="grid grid-cols-[1fr_0.8fr_0.8fr_0.8fr_0.8fr_40px] p-4 text-center items-center opacity-80 italic animate-pulse">
-                                                        <div className="font-mono text-emerald-400 font-bold text-base">{el.number}</div>
-                                                        <div className="text-xs text-emerald-500/70">{el.top || 0}</div>
-                                                        <div className="text-xs text-emerald-500/70">{el.tod || 0}</div>
-                                                        <div className="text-xs text-emerald-500/70">{el.bot || 0}</div>
-                                                        <div className="text-xs font-bold text-emerald-400">{el.sum || 0}</div>
-                                                        <div></div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
 
                                         {(!historyOrder || historyOrder.length === 0) && (!previewOrderForUser || previewOrderForUser.length === 0) && (
                                             <div className="flex flex-col items-center justify-center py-24 text-zinc-800 gap-3">

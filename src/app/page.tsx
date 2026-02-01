@@ -6,12 +6,13 @@ import UserOrdersConfig from '@/components/payment/UserOrdersConfig';
 import NumberRow from "@/components/common/NumberRow";
 import React, { useRef } from 'react';
 import { Trash2, Search, Smartphone, Edit2, Check, X as CloseIcon } from 'lucide-react';
-import { stringToColor } from '@/utils/colors';
 
+
+import { useShallow } from 'zustand/react/shallow';
 
 export default function Home() {
-  const orders = useCustomStore(useMainStore, (state: any) => state.orders)
-  const uniqOrder = useCustomStore(useMainStore, (state: any) => state.uniqOrder)
+  const orders = useCustomStore(useMainStore, useShallow((state: any) => state.orders))
+  const uniqOrder = useCustomStore(useMainStore, useShallow((state: any) => state.uniqOrder))
   const filterKeyword = useCustomStore(useMainStore, (state: any) => state.filterKeyword)
   const changeKeyword = useMainStore((state) => state.changeKeyword)
   const removeOrder = useMainStore((state) => state.removeOrder)
@@ -166,16 +167,20 @@ export default function Home() {
                 </div>
 
                 <div className="divide-y divide-zinc-800/50">
-                  {orders && (filterKeyword === "ทั้งหมด"
-                    ? orders
-                    : orders.filter((el: any) => el?.name === filterKeyword)
-                  ).map((rowData: any, index: number) => (
-                    <NumberRow
-                      rowData={rowData}
-                      key={rowData.id}
-                      index={index}
-                    />
-                  ))}
+                  {React.useMemo(() => {
+                    if (!orders) return null;
+                    const filtered = filterKeyword === "ทั้งหมด"
+                      ? orders
+                      : orders.filter((el: any) => el?.name === filterKeyword);
+
+                    return filtered.map((rowData: any, index: number) => (
+                      <NumberRow
+                        rowData={rowData}
+                        key={rowData.id}
+                        index={index}
+                      />
+                    ));
+                  }, [orders, filterKeyword])}
 
                   {(!orders || orders.length === 0) && (
                     <div className="py-20 flex flex-col items-center justify-center text-zinc-500 gap-4">

@@ -1,24 +1,15 @@
 import { create } from 'zustand'
 import { persist } from "zustand/middleware";
-import { Order, SummaryOrder, NewOrder } from '../model/order';
+import { Order, SummaryOrder, NewOrder } from '../types/order';
 import { nanoid } from 'nanoid'
 import { stringToColor } from '@/utils/colors';
-
-
-const groupBy = (items: any, key: string) => items.reduce(
-    (result: any, item: any) => ({
-        ...result,
-        [item[key]]: [
-            ...(result[item[key]] || []),
-            item,
-        ],
-    }),
-    {},
-);
-
-
+import {
+    calculatePreviewOrders,
+    consolidateOrders
+} from '@/utils/lotteryUtils';
 
 interface OrderState {
+    // State
     orders: Order[];
     newOrders: NewOrder;
     previewOrder: Order[];
@@ -29,57 +20,49 @@ interface OrderState {
     summaryOrders: SummaryOrder[];
     total: number;
     currentAmount: number;
+
+    // Actions: Configuration & General
+
     changeKeyword: (newKeyword: string) => void;
-    setDefaultOrders: () => void;
     setSummaryOrders: (newObj: SummaryOrder[]) => void;
+
+    // Actions: Order Management
     addOrder: () => void;
     addOrderForUser: () => void;
     removeOrder: (id: string) => void;
     removeAllOrder: () => void;
-    editOrder: (newData: object, id: number) => void;
-    changeColor: (newData: object, name: string) => void;
-    editNewOrder: (newData: object) => void;
-    onPaidOrder: (checked: boolean, id: string) => void;
-    makePreviewOrder: (OrderType: string, timestmap: number, defaultColor: string) => void;
-    makePreviewOrderForUser: (OrderType: string, timestmap: number, defaultColor: string) => void;
+    editOrder: (newData: Partial<Order>, id: number) => void;
+    editNewOrder: (newData: Partial<NewOrder>) => void;
+
+    // Actions: Customer Management
     updateCustomerName: (oldName: string, newName: string, color?: string) => void;
+    changeColor: (newData: Partial<Order>, name: string) => void;
     refreshColor: () => void;
+
+    // Actions: Payment & Summary
+    onPaidOrder: (checked: boolean, id: string) => void;
     summarize: () => void;
+
+    // Actions: Preview
+    makePreviewOrder: (OrderType: string, timestamp: number, defaultColor: string) => void;
+    makePreviewOrderForUser: (OrderType: string, timestamp: number, defaultColor: string) => void;
     clearPreviewOrder: () => void;
-}
 
-function nPermute(arr: string[]) {
-    var result: string[] = []
-    // currentSize should be invoked with the array size
-    function permutation(arr: string[], currentSize: number) {
-        if (currentSize == 1) { // recursion base-case (end)
-            result.push(arr.join(""));
-            return;
-        }
-
-        for (let i = 0; i < currentSize; i++) {
-            permutation(arr, currentSize - 1);
-            if (currentSize % 2 == 1) {
-                let temp = arr[0];
-                arr[0] = arr[currentSize - 1];
-                arr[currentSize - 1] = temp;
-            } else {
-                let temp = arr[i];
-                arr[i] = arr[currentSize - 1];
-                arr[currentSize - 1] = temp;
-            }
-        }
-    }
-    permutation(arr, arr.length)
-    return [...new Set(result)]
-
+    // Staging Actions for Keypad
+    stagedOrders: Order[];
+    stageCurrentOrder: () => void;
+    removeStagedOrder: (id: string) => void;
+    clearStagedOrders: () => void;
+    commitStagedOrders: () => void;
 }
 
 export const useMainStore = create<OrderState>()(
     persist(
         (set, get) => ({
+            // --- Initial State ---
             orders: [],
             uniqOrder: [],
+            stagedOrders: [],
             newOrders: {
                 id: nanoid(),
                 tm: Date.now(),
@@ -96,164 +79,97 @@ export const useMainStore = create<OrderState>()(
             total: 0,
             currentAmount: 0,
             isloaded: false,
-            setDefaultOrders: async () => {
-                var res = await fetch('http://localhost:3000/api/prefetch')
-                var historyData = await res.json()
-                set((state) => ({
-                    orders: historyData.orders,
-                }));
-                const orders = get().orders;
-                set({
-                    uniqOrder: [...new Map(orders.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
-                });
-                get().summarize()
-                set({ isloaded: true })
-            },
 
-            changeKeyword: (newKeyword: string) => {
-                set((state) => ({
-                    filterKeyword: newKeyword,
-                }));
-            },
-            setSummaryOrders: (newObj: SummaryOrder[]) => {
-                set((state) => ({
-                    summaryOrders: newObj,
-                }));
-            },
+            // --- Configuration Actions ---
 
-            onPaidOrder: (checked: boolean, id: string) => {
-                const temp = get().summaryOrders.map(order =>
-                    order.id === id ? { ...order, isPaid: checked } : order
-                );
+            changeKeyword: (newKeyword: string) => set({ filterKeyword: newKeyword }),
 
-                const total = temp?.reduce((accumulator: any, object: any) => {
-                    return accumulator + object.sum;
-                }, 0)
-                const currentAmount = temp?.filter((el: any) => el.isPaid).reduce((accumulator: any, object: any) => {
-                    return accumulator + object.sum;
-                }, 0)
+            setSummaryOrders: (newObj: SummaryOrder[]) => set({ summaryOrders: newObj }),
 
-                set((state) => ({
-                    summaryOrders: temp,
-                    total,
-                    currentAmount
-                }));
-            },
+            // --- Order Management Actions ---
             addOrder: () => {
-                let temp = [...get().orders, ...get().previewOrder]
+                const combined = [...get().orders, ...get().previewOrder];
+                const consolidated = consolidateOrders(combined);
 
-                // group same number into one order
-                const orderByName: any = groupBy(temp, "name");
-                const final_result: any = Object.keys(orderByName).map((user_name) => {
-                    const groupedNumber: any = groupBy(orderByName[user_name], "number")
-                    const f_result = Object.keys(groupedNumber).map((n) => {
-                        return {
-                            ...groupedNumber[n][0],
-                            ...{
-                                top: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.top || 0), 0),
-                                bot: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.bot || 0), 0),
-                                tod: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.tod || 0), 0)
-                            }
-                        }
-                    })
-
-                    return f_result
-
-                }).flat()
-
-                set((state) => ({
-                    orders: final_result,
-                }));
+                // Update unique users list
+                const uniqUsers = [...new Map(consolidated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name);
 
                 set({
-                    uniqOrder: [...new Map(final_result.map((item: any) => [`${item.name}-${item.color}`, item])).values()].filter((el: any) => el.name) as Order[]
+                    orders: consolidated
+                        .sort((a, b) => b.tm - a.tm) // Sort by timestamp
+                        .sort((a, b) => { // Sort by name appearance in unique list
+                            const indexA = uniqUsers.findIndex(el => el.name === a.name);
+                            const indexB = uniqUsers.findIndex(el => el.name === b.name);
+                            return indexA - indexB;
+                        }),
+                    uniqOrder: uniqUsers as Order[]
                 });
 
-                // sort order by timestamp
-                set((state) => ({
-                    orders: state.orders.sort((a: any, b: any) => b?.tm - a?.tm),
-                }));
-
-                // sort order by name
-                const uo = get().uniqOrder
-                set((state) => ({
-                    orders: state.orders.sort((a: any, b: any) => (uo.findIndex((el: any) => el?.name == a?.name) - uo.findIndex((el: any) => el?.name == b?.name))),
-                }));
-
-                get().summarize()
-
+                get().summarize();
             },
+
             addOrderForUser: () => {
-                let temp = [...get().orders, ...get().previewOrderForUser]
+                const combined = [...get().orders, ...get().previewOrderForUser];
+                const consolidated = consolidateOrders(combined);
+                const uniqUsers = [...new Map(consolidated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name);
 
-                // group same number into one order
-                const orderByName: any = groupBy(temp, "name");
-                const final_result: any = Object.keys(orderByName).map((user_name) => {
-
-                    const groupedNumber: any = groupBy(orderByName[user_name], "number")
-
-                    const f_result = Object.keys(groupedNumber).map((n) => {
-                        return {
-                            ...groupedNumber[n][0],
-                            ...{
-                                top: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.top || 0), 0),
-                                bot: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.bot || 0), 0),
-                                tod: groupedNumber[n].reduce((accumulator: any, object: any) => accumulator + (object.tod || 0), 0)
-                            }
-                        }
-                    })
-
-                    return f_result
-
-                }).flat()
-
-                set((state) => ({
-                    orders: final_result,
-                }));
-
-                // get unique user
                 set({
-                    uniqOrder: [...new Map(final_result.map((item: any) => [`${item.name}-${item.color}`, item])).values()].filter((el: any) => el.name) as Order[]
+                    orders: consolidated
+                        .sort((a, b) => a.tm - b.tm)
+                        .sort((a, b) => {
+                            const indexA = uniqUsers.findIndex(el => el.name === a.name);
+                            const indexB = uniqUsers.findIndex(el => el.name === b.name);
+                            return indexA - indexB;
+                        }),
+                    uniqOrder: uniqUsers as Order[]
                 });
 
-                // sort order by timestamp
-                set((state) => ({
-                    orders: state.orders.sort((a: any, b: any) => a?.tm - b?.tm),
-                }));
-
-                // sort order by name
-                const uo = get().uniqOrder
-                set((state) => ({
-                    orders: state.orders.sort((a: any, b: any) => (uo.findIndex((el: any) => el?.name == a?.name) - uo.findIndex((el: any) => el?.name == b?.name))),
-                }));
-
-                get().summarize()
-
+                get().summarize();
+                set({
+                    previewOrderForUser: [],
+                    newOrders: { ...get().newOrders, number: "" }
+                });
             },
+
             removeOrder: (id: string) => {
-                const removedData = get().orders.filter((el) => el.id != id)
+                const filtered = get().orders.filter(el => el.id !== id);
                 set({
-                    orders: removedData,
-                    uniqOrder: [...new Map(removedData?.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                    orders: filtered,
+                    uniqOrder: [...new Map(filtered.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
                 });
-                get().summarize()
+                get().summarize();
             },
+
             removeAllOrder: () => {
+                set({ orders: [], uniqOrder: [] });
+                get().summarize();
+            },
+
+            editOrder: (newData: Partial<Order>, index: number) => {
+                const temp = [...get().orders];
+                if (temp[index]) {
+                    temp[index] = { ...temp[index], ...newData };
+                    set({
+                        orders: temp,
+                        uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                    });
+                    get().summarize();
+                }
+            },
+
+            editNewOrder: (newData: Partial<NewOrder>) => {
+                const tm = Date.now();
                 set((state) => ({
-                    orders: [],
-                    uniqOrder: []
+                    newOrders: { ...state.newOrders, ...newData, tm },
                 }));
-                get().summarize()
+
+                const updated = get().newOrders;
+                // Automatically update previews
+                get().makePreviewOrder(updated.setType, tm, updated.color);
+                get().makePreviewOrderForUser(updated.setType, tm, updated.color);
             },
-            editOrder: (newData: object, index: number) => {
-                var temp = [...get().orders]
-                temp[index] = { ...temp[index], ...newData }
-                set({
-                    orders: temp,
-                    uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
-                });
-                get().summarize()
-            },
+
+            // --- Customer Management Actions ---
             updateCustomerName: (oldName: string, newName: string, color?: string) => {
                 if (!newName || oldName === newName) return;
 
@@ -266,7 +182,7 @@ export const useMainStore = create<OrderState>()(
                 const updatedSummary = get().summaryOrders.map(summary => {
                     const matchesName = summary.name === oldName;
                     const matchesColor = color ? (summary as any).color === color : true;
-                    return (matchesName && matchesColor) ? { ...summary, name: newName } : summary
+                    return (matchesName && matchesColor) ? { ...summary, name: newName } : summary;
                 });
 
                 set({
@@ -279,16 +195,17 @@ export const useMainStore = create<OrderState>()(
                 get().summarize();
             },
 
-            changeColor: (newData: object, name: string) => {
-                var temp = get().orders.map((el, index) => {
-                    return el.name == name ? { ...get().orders[index], ...newData } : get().orders[index]
-                })
+            changeColor: (newData: Partial<Order>, name: string) => {
+                const updated = get().orders.map(order =>
+                    order.name === name ? { ...order, ...newData } : order
+                );
                 set({
-                    orders: temp,
-                    uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                    orders: updated,
+                    uniqOrder: [...new Map(updated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
                 });
-                get().summarize()
+                get().summarize();
             },
+
             refreshColor: () => {
                 const name = get().newOrders.name;
                 const tm = Date.now();
@@ -296,526 +213,160 @@ export const useMainStore = create<OrderState>()(
                 get().editNewOrder({ color: newColor, tm });
             },
 
-            editNewOrder: (newData: any) => {
-                let tm = Date.now()
-                set((state) => ({
-                    newOrders: { ...state.newOrders, ...newData, ...{ tm } },
-                }));
-                const newOrder = get().newOrders
+            // --- Payment & Summary Actions ---
+            onPaidOrder: (checked: boolean, id: string) => {
+                const updatedSummary = get().summaryOrders.map(order =>
+                    order.id === id ? { ...order, isPaid: checked } : order
+                );
 
-                try {
-                    get().makePreviewOrder(newOrder?.setType, tm, newOrder?.color)
-                } catch (error) {
-                    console.log(error)
-                }
-                try {
-                    get().makePreviewOrderForUser(newOrder?.setType, tm, newOrder?.color)
-                } catch (error) {
-                    console.log(error)
-                }
+                const total = updatedSummary.reduce((acc, obj) => acc + obj.sum, 0);
+                const currentAmount = updatedSummary.filter(el => el.isPaid).reduce((acc, obj) => acc + obj.sum, 0);
 
-            },
-
-            makePreviewOrder: (OrderType: string, timestamp: number, defaultColor: string = "#fefefe") => {
-                const nOrder = get().newOrders
-                const setNumber: string[] = nPermute(nOrder?.number.split(""))
-                switch (OrderType) {
-                    case "บน":
-                        set((state) => ({
-                            previewOrder: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: nOrder?.price,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "บน+โต๊ด":
-                        set((state) => ({
-                            previewOrder: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: nOrder?.price,
-                                top: nOrder?.price,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "บน+ล่าง":
-                        set((state) => ({
-                            previewOrder: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: nOrder?.price,
-                                bot: nOrder?.price,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "บน+ล่าง+โต๊ด":
-                        set((state) => ({
-                            previewOrder: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: nOrder?.price,
-                                top: nOrder?.price,
-                                bot: nOrder?.price,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "ล่าง":
-                        set((state) => ({
-                            previewOrder: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: 0,
-                                bot: nOrder?.price,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "โต๊ด":
-                        set((state) => ({
-                            previewOrder: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: nOrder?.price,
-                                top: 0,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "ชุด (บน)":
-
-                        set((state) => ({
-                            previewOrder: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: 0,
-                                    top: nOrder?.price,
-                                    bot: 0,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (บน+โต๊ด)":
-
-                        set((state) => ({
-                            previewOrder: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: nOrder?.price,
-                                    top: nOrder?.price,
-                                    bot: 0,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (บน+ล่าง)":
-
-                        set((state) => ({
-                            previewOrder: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: 0,
-                                    top: nOrder?.price,
-                                    bot: nOrder?.price,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (บน+ล่าง+โต๊ด)":
-
-                        set((state) => ({
-                            previewOrder: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: nOrder?.price,
-                                    top: nOrder?.price,
-                                    bot: nOrder?.price,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (ล่าง)":
-                        set((state) => ({
-                            previewOrder: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: 0,
-                                    top: 0,
-                                    bot: nOrder?.price,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (โต๊ด)":
-                        set((state) => ({
-                            previewOrder: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: nOrder?.price,
-                                    top: 0,
-                                    bot: 0,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-                    default:
-                        set((state) => ({
-                            previewOrder: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: nOrder?.price,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            }
-                            ]
-                        }));
-                        break;
-                }
-            },
-            makePreviewOrderForUser: (OrderType: string, timestamp: number, defaultColor: string = "#fefefe") => {
-                const nOrder = get().newOrders
-                const setNumber: string[] = nPermute(nOrder?.number.split(""))
-                switch (OrderType) {
-                    case "บน":
-                        set((state) => ({
-                            previewOrderForUser: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: nOrder?.price,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "บน+โต๊ด":
-                        set((state) => ({
-                            previewOrderForUser: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: nOrder?.price,
-                                top: nOrder?.price,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "บน+ล่าง":
-                        set((state) => ({
-                            previewOrderForUser: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: nOrder?.price,
-                                bot: nOrder?.price,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "ล่าง":
-                        set((state) => ({
-                            previewOrderForUser: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: 0,
-                                bot: nOrder?.price,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "โต๊ด":
-                        set((state) => ({
-                            previewOrderForUser: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: nOrder?.price,
-                                top: 0,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            },]
-                        }));
-                        break;
-
-                    case "ชุด (บน)":
-
-                        set((state) => ({
-                            previewOrderForUser: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: 0,
-                                    top: nOrder?.price,
-                                    bot: 0,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (บน+โต๊ด)":
-
-                        set((state) => ({
-                            previewOrderForUser: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: nOrder?.price,
-                                    top: nOrder?.price,
-                                    bot: 0,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (บน+ล่าง)":
-
-                        set((state) => ({
-                            previewOrderForUser: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: 0,
-                                    top: nOrder?.price,
-                                    bot: nOrder?.price,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (ล่าง)":
-                        set((state) => ({
-                            previewOrderForUser: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: 0,
-                                    top: 0,
-                                    bot: nOrder?.price,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-
-                    case "ชุด (โต๊ด)":
-                        set((state) => ({
-                            previewOrderForUser: [...setNumber.map(nEl => {
-                                return {
-                                    id: nanoid(),
-                                    tm: timestamp,
-                                    name: nOrder?.name,
-                                    number: nEl,
-                                    tod: nOrder?.price,
-                                    top: 0,
-                                    bot: 0,
-                                    sum: 0,
-                                    color: defaultColor
-                                }
-                            })]
-                        }));
-                        break;
-                    default:
-                        set((state) => ({
-                            previewOrderForUser: [{
-                                id: nanoid(),
-                                tm: timestamp,
-                                name: nOrder?.name,
-                                number: nOrder?.number,
-                                tod: 0,
-                                top: nOrder?.price,
-                                bot: 0,
-                                sum: 0,
-                                color: defaultColor
-                            }
-                            ]
-                        }));
-                        break;
-                }
-            },
-            summarize: () => {
-                const tempOrders: Order[] = [...get().orders]
-                const groupedByComposite: any = {}
-                tempOrders.forEach(order => {
-                    const key = `${order.name}-${order.color}`
-                    if (!groupedByComposite[key]) groupedByComposite[key] = []
-                    groupedByComposite[key].push(order)
-                })
-
-                const prevSummaryOrders = get().summaryOrders;
-                var tempSummmaryOrder: any = []
-
-                Object.keys(groupedByComposite).forEach((key: string) => {
-                    const currentGroup = groupedByComposite[key]
-                    const firstOrder = currentGroup[0]
-                    const name = firstOrder.name
-                    const color = firstOrder.color
-
-                    if (name) {
-                        const allTop = currentGroup.reduce((acc: any, obj: any) => acc + (obj.top || 0), 0)
-                        const allTod = currentGroup.reduce((acc: any, obj: any) => acc + (obj.tod || 0), 0)
-                        const allBot = currentGroup.reduce((acc: any, obj: any) => acc + (obj.bot || 0), 0)
-                        const allNum: string[] = currentGroup.map((el: any) => el.number)
-
-                        const existingSummary = prevSummaryOrders.find(s => s.name === name && (s as any).color === color);
-                        const isPaid = existingSummary ? existingSummary.isPaid : false;
-
-                        var temp: any = {
-                            id: existingSummary ? existingSummary.id : nanoid(),
-                            name: name,
-                            color: color,
-                            number: allNum.join(" "),
-                            top: allTop,
-                            tod: allTod,
-                            bot: allBot,
-                            sum: allTop + allTod + allBot,
-                            isPaid: isPaid
-                        }
-                        tempSummmaryOrder.push(temp)
-                    }
-                })
-
-                const total = tempSummmaryOrder?.reduce((accumulator: any, object: any) => {
-                    return accumulator + object.sum;
-                }, 0)
-
-                const currentAmount = tempSummmaryOrder?.filter((el: any) => el.isPaid).reduce((accumulator: any, object: any) => {
-                    return accumulator + object.sum;
-                }, 0)
-
-                var orderCnt = 0
-                const addedSumOrder = tempOrders.map((order: Order, index: number) => {
-                    const prevKey = index - 1 >= 0 ? `${tempOrders[index - 1]?.name}-${tempOrders[index - 1]?.color}` : `${tempOrders[0]?.name}-${tempOrders[0]?.color}`
-                    const currentKey = `${order.name}-${order.color}`
-
-                    orderCnt = currentKey === prevKey ? orderCnt + 1 : 1
-                    const resultSum = tempSummmaryOrder?.filter((elSum: any) => currentKey === `${elSum?.name}-${elSum?.color}`)
-
-                    return resultSum.length > 0 && orderCnt === (groupedByComposite[currentKey]?.length || 0) ? { ...order, ...{ sum: resultSum[0]?.sum } } : { ...order, ...{ sum: 0 } }
-                })
-
-                set((state) => ({
-                    orders: addedSumOrder,
-                    summaryOrders: tempSummmaryOrder,
+                set({
+                    summaryOrders: updatedSummary,
                     total,
                     currentAmount
+                });
+            },
+
+            summarize: () => {
+                const currentOrders = get().orders;
+                if (currentOrders.length === 0) {
+                    set({ summaryOrders: [], total: 0, currentAmount: 0 });
+                    return;
+                }
+
+                const prevSummary = get().summaryOrders;
+                const groups = new Map<string, Order[]>();
+
+                // One pass to group
+                for (const order of currentOrders) {
+                    const key = `${order.name}-${order.color}`;
+                    let group = groups.get(key);
+                    if (!group) {
+                        group = [];
+                        groups.set(key, group);
+                    }
+                    group.push(order);
+                }
+
+                let total = 0;
+                let currentAmount = 0;
+                const newSummary: SummaryOrder[] = [];
+
+                // Calculate summary in one pass over groups
+                groups.forEach((group, key) => {
+                    const first = group[0];
+                    if (!first.name) return;
+
+                    const existing = prevSummary.find(s => s.name === first.name && (s as any).color === first.color);
+
+                    let top = 0, tod = 0, bot = 0;
+                    for (const o of group) {
+                        top += (o.top || 0);
+                        tod += (o.tod || 0);
+                        bot += (o.bot || 0);
+                    }
+
+                    const sum = top + tod + bot;
+                    const isPaid = existing ? existing.isPaid : false;
+
+                    total += sum;
+                    if (isPaid) currentAmount += sum;
+
+                    newSummary.push({
+                        id: existing ? existing.id : nanoid(),
+                        name: first.name,
+                        color: first.color,
+                        number: group.map(o => o.number).join(" "),
+                        top,
+                        tod,
+                        bot,
+                        sum,
+                        isPaid
+                    } as any);
+                });
+
+                // Update orders to include sums only for the last item in each group
+                // This is O(N) but clean
+                const finalOrders = currentOrders.map((order, index) => {
+                    const key = `${order.name}-${order.color}`;
+                    const group = groups.get(key)!;
+                    const isLastInGroup = group[group.length - 1] === order;
+
+                    if (isLastInGroup) {
+                        const summary = newSummary.find(s => s.name === order.name && (s as any).color === order.color);
+                        return { ...order, sum: summary?.sum || 0 };
+                    }
+                    return order.sum === 0 ? order : { ...order, sum: 0 };
+                });
+
+                set({
+                    orders: finalOrders,
+                    summaryOrders: newSummary,
+                    total,
+                    currentAmount
+                });
+            },
+
+            // --- Preview Actions ---
+            makePreviewOrder: (OrderType: string, timestamp: number, defaultColor: string = "#fefefe") => {
+                const previews = calculatePreviewOrders(get().newOrders, timestamp, defaultColor);
+                set({ previewOrder: previews });
+            },
+
+            makePreviewOrderForUser: (OrderType: string, timestamp: number, defaultColor: string = "#fefefe") => {
+                const previews = calculatePreviewOrders(get().newOrders, timestamp, defaultColor);
+                set({ previewOrderForUser: previews });
+            },
+
+            clearPreviewOrder: () => set({ previewOrderForUser: [] }),
+
+            // --- Staging Actions ---
+            stageCurrentOrder: () => {
+                const currentPreview = get().previewOrder;
+                if (currentPreview.length === 0) return;
+
+                set(state => ({
+                    stagedOrders: [...state.stagedOrders, ...currentPreview],
+                    previewOrder: [],
+                    newOrders: { ...state.newOrders, number: "" } // Clear number for next input
                 }));
             },
-            clearPreviewOrder: () => {
-                set((state) => ({
-                    previewOrderForUser: []
+
+            removeStagedOrder: (id: string) => {
+                set(state => ({
+                    stagedOrders: state.stagedOrders.filter(o => o.id !== id)
                 }));
+            },
+
+            clearStagedOrders: () => set({ stagedOrders: [] }),
+
+            commitStagedOrders: () => {
+                const staged = get().stagedOrders;
+                if (staged.length === 0) return;
+
+                const combined = [...get().orders, ...staged];
+                const consolidated = consolidateOrders(combined);
+                const uniqUsers = [...new Map(consolidated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name);
+
+                set({
+                    orders: consolidated
+                        .sort((a, b) => b.tm - a.tm)
+                        .sort((a, b) => {
+                            const indexA = uniqUsers.findIndex(el => el.name === a.name);
+                            const indexB = uniqUsers.findIndex(el => el.name === b.name);
+                            return indexA - indexB;
+                        }),
+                    uniqOrder: uniqUsers as Order[],
+                    stagedOrders: [], // Clear staging after commit
+                });
+
+                get().summarize();
             }
         }),
         {
             name: "mainStore",
         }
-
     )
 );

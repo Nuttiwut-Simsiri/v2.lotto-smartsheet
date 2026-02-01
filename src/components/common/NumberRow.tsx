@@ -2,7 +2,7 @@
 import React from 'react';
 import { stringToColor } from '@/utils/colors';
 
-export default function NRow({ rowData }: any) {
+const NRow = React.memo(({ rowData }: any) => {
     if (!rowData) return null;
 
     const topValue = rowData.top ?? 0;
@@ -45,5 +45,7 @@ export default function NRow({ rowData }: any) {
             </div>
         </div>
     );
-}
+});
+
+export default NRow;
 

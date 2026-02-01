@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import useCustomStore from "@/hooks/useCustomStore";
 import { useRewardnHPStore } from "@/hooks/useRewardStore";
-import { Rewards } from "@/model/rewards";
+import { Rewards } from "@/types/rewards";
 import { Hash } from 'lucide-react';
 
 export default function RewardsTable() {

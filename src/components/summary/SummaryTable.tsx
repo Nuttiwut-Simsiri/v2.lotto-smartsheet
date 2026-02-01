@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import useCustomStore from "@/hooks/useCustomStore";
 import { useMainStore } from "@/hooks/useMainStore";
 import { toJpeg } from 'html-to-image';
@@ -17,12 +17,14 @@ export default function SummaryTable({ headers }: { headers: string[] }) {
     const shareRef = useRef<HTMLDivElement>(null);
 
     // Calculate category breakdown for summary table
-    const categoryBreakdown = selectedUser?.details?.reduce((acc: any, curr: any) => {
-        acc.top += (curr.top || 0);
-        acc.tod += (curr.tod || 0);
-        acc.bot += (curr.bot || 0);
-        return acc;
-    }, { top: 0, tod: 0, bot: 0 }) || { top: 0, tod: 0, bot: 0 };
+    const categoryBreakdown = useMemo(() => {
+        return selectedUser?.details?.reduce((acc: any, curr: any) => {
+            acc.top += (curr.top || 0);
+            acc.tod += (curr.tod || 0);
+            acc.bot += (curr.bot || 0);
+            return acc;
+        }, { top: 0, tod: 0, bot: 0 }) || { top: 0, tod: 0, bot: 0 };
+    }, [selectedUser]);
 
     const openDetails = (userSummary: any) => {
         const userDetails = orders.filter((o: any) => o.name === userSummary.name);

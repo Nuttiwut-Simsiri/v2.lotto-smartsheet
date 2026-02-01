@@ -5,12 +5,14 @@ import KeypadInput from "@/components/input/KeypadInput";
 import { CustomerSidebar } from '@/components/layout/CustomerSidebar';
 import { OrderTable } from '@/components/common/OrderTable';
 import { DeleteAllModalWrapper } from '@/components/common/DeleteAllModalWrapper';
+import { CloudHydration } from '@/components/common/CloudHydration';
 
 export default async function Home() {
   const session = await auth();
 
   return (
     <main className="animate-fade-in max-w-7xl mx-auto w-full px-4 pt-12 pb-32">
+      <CloudHydration session={session} />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
         <div>

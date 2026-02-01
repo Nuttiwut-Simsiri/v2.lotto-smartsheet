@@ -3,10 +3,14 @@ import { persist } from "zustand/middleware";
 import { Order, SummaryOrder, NewOrder } from '../types/order';
 import { nanoid } from 'nanoid'
 import { stringToColor } from '@/utils/colors';
+import { saveOrdersToCloud, fetchOrdersFromCloud } from '@/actions/kvActions';
 import {
     calculatePreviewOrders,
     consolidateOrders
 } from '@/utils/lotteryUtils';
+
+let syncTimer: NodeJS.Timeout | null = null;
+const SYNC_DELAY = 3 * 1000; // 3 seconds
 
 interface OrderState {
     // State
@@ -20,9 +24,10 @@ interface OrderState {
     summaryOrders: SummaryOrder[];
     total: number;
     currentAmount: number;
+    isSyncing: boolean;
+    lastSynced: number | null;
 
     // Actions: Configuration & General
-
     changeKeyword: (newKeyword: string) => void;
     setSummaryOrders: (newObj: SummaryOrder[]) => void;
 
@@ -31,7 +36,7 @@ interface OrderState {
     addOrderForUser: () => void;
     removeOrder: (id: string) => void;
     removeAllOrder: () => void;
-    editOrder: (newData: Partial<Order>, id: number) => void;
+    editOrder: (newData: Partial<Order>, index: number) => void;
     editNewOrder: (newData: Partial<NewOrder>) => void;
 
     // Actions: Customer Management
@@ -54,6 +59,11 @@ interface OrderState {
     removeStagedOrder: (id: string) => void;
     clearStagedOrders: () => void;
     commitStagedOrders: () => void;
+
+    // Cloud Actions
+    syncToCloud: () => Promise<void>;
+    forceSyncToCloud: () => Promise<void>;
+    hydrateCloud: () => Promise<void>;
 }
 
 export const useMainStore = create<OrderState>()(
@@ -79,25 +89,23 @@ export const useMainStore = create<OrderState>()(
             total: 0,
             currentAmount: 0,
             isloaded: false,
+            isSyncing: false,
+            lastSynced: null,
 
             // --- Configuration Actions ---
-
             changeKeyword: (newKeyword: string) => set({ filterKeyword: newKeyword }),
-
             setSummaryOrders: (newObj: SummaryOrder[]) => set({ summaryOrders: newObj }),
 
             // --- Order Management Actions ---
             addOrder: () => {
                 const combined = [...get().orders, ...get().previewOrder];
                 const consolidated = consolidateOrders(combined);
-
-                // Update unique users list
                 const uniqUsers = [...new Map(consolidated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name);
 
                 set({
                     orders: consolidated
-                        .sort((a, b) => b.tm - a.tm) // Sort by timestamp
-                        .sort((a, b) => { // Sort by name appearance in unique list
+                        .sort((a, b) => b.tm - a.tm)
+                        .sort((a, b) => {
                             const indexA = uniqUsers.findIndex(el => el.name === a.name);
                             const indexB = uniqUsers.findIndex(el => el.name === b.name);
                             return indexA - indexB;
@@ -106,6 +114,7 @@ export const useMainStore = create<OrderState>()(
                 });
 
                 get().summarize();
+                get().syncToCloud();
             },
 
             addOrderForUser: () => {
@@ -129,6 +138,7 @@ export const useMainStore = create<OrderState>()(
                     previewOrderForUser: [],
                     newOrders: { ...get().newOrders, number: "" }
                 });
+                get().syncToCloud();
             },
 
             removeOrder: (id: string) => {
@@ -138,11 +148,13 @@ export const useMainStore = create<OrderState>()(
                     uniqOrder: [...new Map(filtered.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
                 });
                 get().summarize();
+                get().syncToCloud();
             },
 
             removeAllOrder: () => {
                 set({ orders: [], uniqOrder: [] });
                 get().summarize();
+                get().syncToCloud();
             },
 
             editOrder: (newData: Partial<Order>, index: number) => {
@@ -154,6 +166,7 @@ export const useMainStore = create<OrderState>()(
                         uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
                     });
                     get().summarize();
+                    get().syncToCloud();
                 }
             },
 
@@ -164,7 +177,6 @@ export const useMainStore = create<OrderState>()(
                 }));
 
                 const updated = get().newOrders;
-                // Automatically update previews
                 get().makePreviewOrder(updated.setType, tm, updated.color);
                 get().makePreviewOrderForUser(updated.setType, tm, updated.color);
             },
@@ -193,6 +205,7 @@ export const useMainStore = create<OrderState>()(
                 });
 
                 get().summarize();
+                get().syncToCloud();
             },
 
             changeColor: (newData: Partial<Order>, name: string) => {
@@ -204,6 +217,7 @@ export const useMainStore = create<OrderState>()(
                     uniqOrder: [...new Map(updated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
                 });
                 get().summarize();
+                get().syncToCloud();
             },
 
             refreshColor: () => {
@@ -239,7 +253,6 @@ export const useMainStore = create<OrderState>()(
                 const prevSummary = get().summaryOrders;
                 const groups = new Map<string, Order[]>();
 
-                // One pass to group
                 for (const order of currentOrders) {
                     const key = `${order.name}-${order.color}`;
                     let group = groups.get(key);
@@ -254,7 +267,6 @@ export const useMainStore = create<OrderState>()(
                 let currentAmount = 0;
                 const newSummary: SummaryOrder[] = [];
 
-                // Calculate summary in one pass over groups
                 groups.forEach((group, key) => {
                     const first = group[0];
                     if (!first.name) return;
@@ -287,8 +299,6 @@ export const useMainStore = create<OrderState>()(
                     } as any);
                 });
 
-                // Update orders to include sums only for the last item in each group
-                // This is O(N) but clean
                 const finalOrders = currentOrders.map((order, index) => {
                     const key = `${order.name}-${order.color}`;
                     const group = groups.get(key)!;
@@ -330,7 +340,7 @@ export const useMainStore = create<OrderState>()(
                 set(state => ({
                     stagedOrders: [...state.stagedOrders, ...currentPreview],
                     previewOrder: [],
-                    newOrders: { ...state.newOrders, number: "" } // Clear number for next input
+                    newOrders: { ...state.newOrders, number: "" }
                 }));
             },
 
@@ -359,10 +369,70 @@ export const useMainStore = create<OrderState>()(
                             return indexA - indexB;
                         }),
                     uniqOrder: uniqUsers as Order[],
-                    stagedOrders: [], // Clear staging after commit
+                    stagedOrders: [],
                 });
 
                 get().summarize();
+                get().syncToCloud();
+            },
+
+            // --- Cloud Actions ---
+            syncToCloud: async () => {
+                if (syncTimer) clearTimeout(syncTimer);
+
+                syncTimer = setTimeout(async () => {
+                    const orders = get().orders;
+                    set({ isSyncing: true });
+                    try {
+                        const result = await saveOrdersToCloud(orders);
+                        if (result.success) {
+                            set({ lastSynced: Date.now() });
+                        }
+                    } finally {
+                        set({ isSyncing: false });
+                        syncTimer = null;
+                    }
+                }, SYNC_DELAY);
+            },
+
+            forceSyncToCloud: async () => {
+                if (syncTimer) {
+                    clearTimeout(syncTimer);
+                    syncTimer = null;
+                }
+                const orders = get().orders;
+                set({ isSyncing: true });
+                try {
+                    const result = await saveOrdersToCloud(orders);
+                    if (result.success) {
+                        set({ lastSynced: Date.now() });
+                    }
+                } finally {
+                    set({ isSyncing: false });
+                }
+            },
+
+            hydrateCloud: async () => {
+                set({ isSyncing: true });
+                try {
+                    const result = await fetchOrdersFromCloud();
+                    if (result.success && result.data) {
+                        const cloudOrders = result.data;
+                        if (cloudOrders.length > 0) {
+                            const consolidated = consolidateOrders(cloudOrders);
+                            const uniqUsers = [...new Map(consolidated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name);
+
+                            set({
+                                orders: consolidated,
+                                uniqOrder: uniqUsers as Order[],
+                                lastSynced: Date.now()
+                            });
+                            get().summarize();
+                        }
+                    }
+                } finally {
+                    set({ isSyncing: false, isloaded: true });
+                }
             }
         }),
         {

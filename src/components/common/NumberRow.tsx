@@ -1,9 +1,8 @@
 "use client"
 import React from 'react';
-import { stringToColor } from '@/utils/colors';
-
 import { Trash2, Edit2, Check, X as CloseIcon } from 'lucide-react';
 import { useMainStore } from '@/hooks/useMainStore';
+import { stringToColor } from '@/utils/colors';
 
 const NRow = React.memo(({ rowData }: any) => {
     const removeOrder = useMainStore(state => state.removeOrder);

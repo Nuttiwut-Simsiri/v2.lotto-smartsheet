@@ -146,12 +146,23 @@ export const useMainStore = create<OrderState>()(
             },
 
             editOrder: (newData: Partial<Order>, id: string) => {
-                const temp = get().orders.map(order =>
+                const currentOrders = get().orders;
+                const updated = currentOrders.map(order =>
                     order.id === id ? { ...order, ...newData } : order
                 );
+
+                const consolidated = consolidateOrders(updated);
+                const uniqUsers = [...new Map(consolidated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name);
+
                 set({
-                    orders: temp,
-                    uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                    orders: consolidated
+                        .sort((a, b) => b.tm - a.tm)
+                        .sort((a, b) => {
+                            const indexA = uniqUsers.findIndex(el => el.name === a.name);
+                            const indexB = uniqUsers.findIndex(el => el.name === b.name);
+                            return indexA - indexB;
+                        }),
+                    uniqOrder: uniqUsers as Order[]
                 });
                 get().summarize();
             },

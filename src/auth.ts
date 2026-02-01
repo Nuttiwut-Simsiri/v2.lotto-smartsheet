@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google"
 // List of allowed emails (Whitelist)
 const ALLOWED_EMAILS = [
     "nuttiwutsimsiri@gmail.com", // Add your emails here
-    "sopidapromsai.01@gmail.com"
+    "sophidapromsai.01@gmail.com"
 ];
 
 export const { handlers, signIn, signOut, auth } = NextAuth({

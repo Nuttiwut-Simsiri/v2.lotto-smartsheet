@@ -2,7 +2,7 @@
 import { useMainStore } from "@/hooks/useMainStore";
 import useCustomStore from "@/hooks/useCustomStore";
 import { useRef } from "react";
-import { PlusCircle, X, User, Hash, Coins, Settings2, Eye, RefreshCcw, Check } from "lucide-react";
+import { PlusCircle, X, User, Hash, Coins, Settings2, Eye, RefreshCcw, Check, Edit2 } from "lucide-react";
 import { stringToColor } from "@/utils/colors";
 import { useShallow } from 'zustand/react/shallow';
 
@@ -221,12 +221,31 @@ const AddSetNumbers = () => {
                                                     <div className="text-xs text-zinc-400">{el.top || 0}</div>
                                                     <div className="text-xs text-zinc-400">{el.tod || 0}</div>
                                                     <div className="text-xs text-zinc-400">{el.bot || 0}</div>
-                                                    <button
-                                                        onClick={() => removeStagedOrder(el.id)}
-                                                        className="text-zinc-600 hover:text-red-500 transition-all p-1.5 ml-auto block bg-zinc-900/50 rounded-lg hover:bg-red-500/10"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
+                                                    <div className="flex items-center gap-1 ml-auto">
+                                                        <button
+                                                            onClick={() => {
+                                                                editNewOrder({
+                                                                    name: el.name,
+                                                                    number: el.number,
+                                                                    price: el.top || el.tod || el.bot || 0,
+                                                                    color: el.color
+                                                                });
+                                                                removeStagedOrder(el.id);
+                                                                numInputRef.current?.focus();
+                                                            }}
+                                                            className="text-zinc-600 hover:text-blue-500 transition-all p-1.5 bg-zinc-900/50 rounded-lg hover:bg-blue-500/10"
+                                                            title="แก้ไข"
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => removeStagedOrder(el.id)}
+                                                            className="text-zinc-600 hover:text-red-500 transition-all p-1.5 bg-zinc-900/50 rounded-lg hover:bg-red-500/10"
+                                                            title="ลบ"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
 

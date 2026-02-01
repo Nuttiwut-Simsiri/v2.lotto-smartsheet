@@ -31,7 +31,7 @@ interface OrderState {
     addOrderForUser: () => void;
     removeOrder: (id: string) => void;
     removeAllOrder: () => void;
-    editOrder: (newData: Partial<Order>, id: number) => void;
+    editOrder: (newData: Partial<Order>, id: string) => void;
     editNewOrder: (newData: Partial<NewOrder>) => void;
 
     // Actions: Customer Management
@@ -145,16 +145,15 @@ export const useMainStore = create<OrderState>()(
                 get().summarize();
             },
 
-            editOrder: (newData: Partial<Order>, index: number) => {
-                const temp = [...get().orders];
-                if (temp[index]) {
-                    temp[index] = { ...temp[index], ...newData };
-                    set({
-                        orders: temp,
-                        uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
-                    });
-                    get().summarize();
-                }
+            editOrder: (newData: Partial<Order>, id: string) => {
+                const temp = get().orders.map(order =>
+                    order.id === id ? { ...order, ...newData } : order
+                );
+                set({
+                    orders: temp,
+                    uniqOrder: [...new Map(temp.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name) as Order[]
+                });
+                get().summarize();
             },
 
             editNewOrder: (newData: Partial<NewOrder>) => {

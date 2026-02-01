@@ -16,6 +16,7 @@
     "lucide-react": "^0.563.0",
     "nanoid": "^5.0.9",
     "next": "16.1.6",
+    "next-auth": "^5.0.0-beta.30",
     "promptparse": "^1.5.0",
     "qrcode.react": "^4.2.0",
     "react": "19.0.0",

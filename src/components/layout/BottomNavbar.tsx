@@ -7,6 +7,9 @@ export function BottomNavBar() {
     const pathname = usePathname()
     const router = useRouter()
 
+    // Hide navbar on auth pages
+    if (pathname?.startsWith('/auth')) return null;
+
     const navItems = [
         { href: "/", icon: Home, label: "หน้าแรก" },
         { href: "/summary", icon: BarChart3, label: "สรุปยอด" },

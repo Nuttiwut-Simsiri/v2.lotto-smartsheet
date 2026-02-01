@@ -6,7 +6,7 @@ interface SummaryRowProps {
     onPaidOrder: (isPaid: boolean, id: string) => void;
 }
 
-export const SummaryRow = ({ el, onViewDetails, onPaidOrder }: SummaryRowProps) => {
+export const SummaryTableRow = ({ el, onViewDetails, onPaidOrder }: SummaryRowProps) => {
     return (
         <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1.2fr_0.5fr] items-center p-4 hover:bg-zinc-800/20 transition-colors group">
             <div className="text-sm font-semibold text-white px-2 truncate">

@@ -1,11 +1,11 @@
 import { useState, useRef } from "react";
 import useCustomStore from "@/hooks/useCustomStore";
 import { useMainStore } from "@/hooks/useMainStore";
-import { toPng } from 'html-to-image';
-import { SummaryRow } from "./summary-row";
-import { DetailsModal } from "./details-modal";
+import { toJpeg } from 'html-to-image';
+import { SummaryTableRow } from "./SummaryTableRow";
+import { BillDetailsModal } from "../payment/BillDetailsModal";
 
-export default function NewCSTable({ headers }: { headers: string[] }) {
+export default function SummaryTable({ headers }: { headers: string[] }) {
     const summaryOrders = useCustomStore(useMainStore, (state: any) => state.summaryOrders)
     const orders = useCustomStore(useMainStore, (state: any) => state.orders)
     const onPaidOrder = useMainStore((state) => state.onPaidOrder)
@@ -39,20 +39,20 @@ export default function NewCSTable({ headers }: { headers: string[] }) {
         setIsSharing(true);
 
         try {
-            const dataUrl = await toPng(shareRef.current, {
+            const dataUrl = await toJpeg(shareRef.current, {
                 cacheBust: true,
                 backgroundColor: '#ffffff',
                 pixelRatio: 2,
-                canvasWidth: 800,
+                canvasWidth: 780,
                 style: {
                     margin: '0',
-                    width: '800px',
+                    width: '780px',
                 }
             });
 
             const blob = await (await fetch(dataUrl)).blob();
-            const fileName = `lotto-summary-${selectedUser?.name}-${Date.now()}.png`;
-            const file = new File([blob], fileName, { type: 'image/png' });
+            const fileName = `lotto-summary-${selectedUser?.name}-${Date.now()}.jpeg`;
+            const file = new File([blob], fileName, { type: 'image/jpeg' });
 
             if (navigator.share && navigator.canShare({ files: [file] })) {
                 await navigator.share({
@@ -77,7 +77,7 @@ export default function NewCSTable({ headers }: { headers: string[] }) {
     return (
         <div className="w-full">
             <div className="overflow-x-auto">
-                <div className="min-w-[700px]">
+                <div className="min-w-[780px]">
                     {/* Table Header */}
                     <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1.2fr_0.5fr] bg-zinc-900/50 p-4 border-b border-zinc-800">
                         {headers.map((h, i) => (
@@ -90,7 +90,7 @@ export default function NewCSTable({ headers }: { headers: string[] }) {
                     {/* Table Body */}
                     <div className="divide-y divide-zinc-800/50">
                         {summaryOrders?.filter((el: any) => el.name).map((el: any) => (
-                            <SummaryRow
+                            <SummaryTableRow
                                 key={el.id}
                                 el={el}
                                 onViewDetails={openDetails}
@@ -102,7 +102,7 @@ export default function NewCSTable({ headers }: { headers: string[] }) {
             </div>
 
             {/* Numbers Detail Modal */}
-            <DetailsModal
+            <BillDetailsModal
                 modalRef={modalRef}
                 shareRef={shareRef}
                 selectedUser={selectedUser}

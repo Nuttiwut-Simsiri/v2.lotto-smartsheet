@@ -4,7 +4,7 @@ import useCustomStore from "@/hooks/useCustomStore";
 import { useRef } from "react";
 import { User, X, PlusCircle, History, Hash, Coins, Settings2, Trash2 } from "lucide-react";
 
-const UserOrders = ({ username, hColor }: { username: string, hColor: string }) => {
+const UserOrdersConfig = ({ username, hColor }: { username: string, hColor: string }) => {
     const modalRef = useRef<HTMLDialogElement>(null);
     const orders = useCustomStore(useMainStore, (state: any) => state.orders)
     const newOrders = useCustomStore(useMainStore, (state: any) => state.newOrders)
@@ -236,4 +236,4 @@ const UserOrders = ({ username, hColor }: { username: string, hColor: string }) 
     )
 }
 
-export default UserOrders
+export default UserOrdersConfig;

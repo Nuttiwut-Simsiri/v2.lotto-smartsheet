@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { BottomNavBar } from '../components/bottom-navbar'
+import { BottomNavBar } from '@/components/layout/BottomNavbar'
 import './globals.css'
 import { Itim, Mali } from 'next/font/google';
 

@@ -1,21 +1,23 @@
 import { Printer } from 'lucide-react';
+import { generate } from 'promptparse';
+import { QRCodeSVG } from 'qrcode.react';
 
-interface SlipContentProps {
+interface BillSlipProps {
     shareRef: React.RefObject<HTMLDivElement | null>;
     selectedUser: any;
     categoryBreakdown: { top: number; tod: number; bot: number };
     showQRCode: boolean;
 }
 
-export const SlipContent = ({ shareRef, selectedUser, categoryBreakdown, showQRCode }: SlipContentProps) => {
+export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode }: BillSlipProps) => {
     return (
         <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-0 bg-white">
             <div className="min-w-fit w-full flex justify-center bg-white">
                 <div
                     ref={shareRef}
                     style={{
-                        width: '800px',
-                        minWidth: '800px',
+                        width: '780px',
+                        minWidth: '780px',
                         backgroundColor: '#ffffff'
                     }}
                     className="p-12 space-y-8 text-zinc-950 flex-shrink-0"
@@ -129,7 +131,7 @@ export const SlipContent = ({ shareRef, selectedUser, categoryBreakdown, showQRC
                                 </div>
                                 <p className="text-2xl font-black text-emerald-600">{categoryBreakdown.tod.toLocaleString()}</p>
                             </div>
-                            <div className="bg-amber-50/50 rounded-2xl p-4 border border-amber-100 flex justify-between items-center group">
+                            <div className="bg-amber-50/50 rounded-2xl p-4 border border-amber-200 flex justify-between items-center group">
                                 <div className="space-y-0.5">
                                     <p className="text-xs font-black text-amber-400 uppercase tracking-widest">ยอดรวม (ล่าง)</p>
                                     <p className="text-sm font-bold text-amber-900">รวม</p>
@@ -139,19 +141,20 @@ export const SlipContent = ({ shareRef, selectedUser, categoryBreakdown, showQRC
                         </div>
                     </div>
 
-                    {/* Final Total - Clear & Reliable */}
+                    {/* Final Total - Vibrant Design */}
                     <div className="pt-4 mt-6">
-                        <div className="bg-zinc-900 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-xl">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 blur-[50px] rounded-full -mr-16 -mt-16" />
+                        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[60px] rounded-full -mr-32 -mt-32" />
+                            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 blur-[50px] rounded-full -ml-24 -mb-24" />
                             <div className="relative flex items-center justify-between">
                                 <div className="space-y-1">
-                                    <p className="text-xs font-black text-white/40 uppercase tracking-[0.2em]">ยอดเงินรวมสุทธิ</p>
-                                    <h3 className="text-lg font-bold">จำนวนเงิน</h3>
+                                    <p className="text-xs font-black text-blue-100/60 uppercase tracking-[0.2em]">ยอดเงินรวมสุทธิ</p>
+                                    <h3 className="text-xl font-bold">จำนวนเงินที่ต้องชำระ</h3>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-5xl font-black text-white tracking-tighter">
+                                    <span className="text-6xl font-black text-white tracking-tighter drop-shadow-lg">
                                         {selectedUser?.sum?.toLocaleString()}
-                                        <span className="text-xl ml-2 font-bold text-white/60">บาท</span>
+                                        <span className="text-2xl ml-3 font-bold text-blue-100">บาท</span>
                                     </span>
                                 </div>
                             </div>
@@ -175,12 +178,16 @@ export const SlipContent = ({ shareRef, selectedUser, categoryBreakdown, showQRC
                                         </div>
                                     </div>
 
-                                    {/* QR Code Slot - Put your actual QR image here */}
+                                    {/* QR Code Slot - Dynamic Generation */}
                                     <div className="w-48 h-48 bg-white rounded-3xl p-3 border-4 border-zinc-50 shadow-inner flex items-center justify-center overflow-hidden">
-                                        <img
-                                            src="/QRCode/noonidzz-qr-code.jpeg"
-                                            alt="Actual QR Code"
-                                            className="w-full h-full object-contain"
+                                        <QRCodeSVG
+                                            value={generate.anyId({
+                                                type: 'MSISDN',
+                                                target: process.env.NEXT_PUBLIC_PROMPTPAY_ID || "",
+                                                amount: selectedUser?.sum || 0
+                                            })}
+                                            size={160}
+                                            level="M"
                                         />
                                     </div>
 
@@ -200,12 +207,12 @@ export const SlipContent = ({ shareRef, selectedUser, categoryBreakdown, showQRC
 
                     {/* Footer Thai */}
                     <div className="py-2 border-t border-zinc-100 flex justify-between items-center text-zinc-400">
-                        <p className="text-xs font-bold italic"> ขอบคุณที่อุดหนุนค่ะ ขอให้เฮงๆ รวยๆ โชคดีถูกรางวัลนะคะ 🧧✨ </p>
                         <div className="flex items-center gap-1 opacity-30">
                             <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full" />
                             <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full" />
                             <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full" />
                         </div>
+                        <p className="text-xs font-bold italic"> ขอบคุณที่อุดหนุนค่ะ ขอให้เฮงๆ รวยๆ โชคดีถูกรางวัลนะคะ 🧧✨ </p>
                     </div>
                 </div>
             </div>

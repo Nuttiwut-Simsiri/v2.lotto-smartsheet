@@ -1,17 +1,19 @@
 import { useRef } from "react";
-import { Trophy, PartyPopper, Star, Printer } from 'lucide-react';
+import { BillSlip } from "./BillSlip";
+import { useMainStore } from "@/hooks/useMainStore";
+import { Trophy, Star, PartyPopper, Printer } from 'lucide-react';
 
-interface CongratsSlipProps {
-    shareRef: React.RefObject<HTMLDivElement | null>;
+interface CongratulationSlipProps {
     selectedUser: any;
 }
 
-export const CongratsSlip = ({ shareRef, selectedUser }: CongratsSlipProps) => {
+export const CongratulationSlip = ({ selectedUser }: CongratulationSlipProps) => {
+    const orders = useMainStore((state) => state.orders)
     return (
         <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-0 bg-zinc-900/50">
             <div className="min-w-fit w-full flex justify-center py-10">
                 <div
-                    ref={shareRef}
+                    ref={useRef(null)}
                     style={{
                         width: '800px',
                         minWidth: '800px',
@@ -108,13 +110,13 @@ export const CongratsSlip = ({ shareRef, selectedUser }: CongratsSlipProps) => {
                         <div className="flex justify-center items-center gap-8">
                             <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent to-amber-300" />
                             <p className="text-3xl font-bold italic text-amber-700 font-friendly px-6">
-                                " เฮงๆ รวยๆ ปังๆ ยิ่งขึ้นไปนะคะ "
+                                " เฮงๆ รวยๆ ปังๆ จ้าาา "
                             </p>
                             <div className="h-[2px] flex-1 bg-gradient-to-l from-transparent to-amber-300" />
                         </div>
 
                         <div className="flex justify-between items-center text-xs font-bold text-zinc-400 uppercase tracking-widest px-4">
-                            <p>ขอบคุณที่ใช้บริการกับเราค่ะ</p>
+                            <p>ขอบคุณที่อุดหนุนค่ะ</p>
                             <p>ขอให้โชคดี ถูกรางวัลตลอดไปนะคะ</p>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
-import RewardsTable from "../../components/reward-table";
-import HalfPayTable from "../../components/half-pay-table";
+import RewardsTable from "@/components/settings/RewardTable";
+import HalfPayTable from "@/components/settings/HalfPayTable";
 import { Trophy, ShieldAlert } from 'lucide-react';
 
 export default async function RewardsPage() {

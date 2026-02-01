@@ -5,7 +5,7 @@ import { useMainStore } from "@/hooks/useMainStore";
 import { Rewards, HPNumbersProps } from "@/model/rewards";
 import { useEffect, useState } from "react";
 import { CreditCard, Trophy, CheckCircle2, AlertTriangle, Hash, Share2, Printer, Eye } from "lucide-react";
-import { CongratsModal } from "@/components/congrats-modal";
+import { CongratulationModal } from "@/components/payment/CongratulationModal";
 import { toPng } from 'html-to-image';
 import { useRef } from "react";
 
@@ -311,7 +311,7 @@ export default function PaymentPage() {
         </section>
       </div>
 
-      <CongratsModal
+      <CongratulationModal
         modalRef={rewardModalRef}
         shareRef={rewardShareRef}
         selectedUser={selectedUser}

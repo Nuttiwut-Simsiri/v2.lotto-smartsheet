@@ -1,9 +1,9 @@
 "use client"
 import useCustomStore from '@/hooks/useCustomStore';
 import { useMainStore } from '@/hooks/useMainStore';
-import AddSetNumbers from "../components/addsetnumbers";
-import UserOrders from '@/components/user-orders';
-import NRow from "../components/nrow";
+import KeypadInput from "@/components/input/KeypadInput";
+import UserOrdersConfig from '@/components/payment/UserOrdersConfig';
+import NumberRow from "@/components/common/NumberRow";
 import React, { useRef } from 'react';
 import { Trash2, Search, Smartphone } from 'lucide-react';
 import { stringToColor } from '@/utils/colors';
@@ -46,7 +46,7 @@ export default function Home() {
             <span>ลบทั้งหมด</span>
           </button>
 
-          <AddSetNumbers />
+          <KeypadInput />
         </div>
       </div>
 
@@ -88,7 +88,7 @@ export default function Home() {
                       />
                       <span className="font-bold text-zinc-100" style={{ color: customerColor }}>{el.name}</span>
                     </div>
-                    <UserOrders username={el.name} hColor={customerColor} />
+                    <UserOrdersConfig username={el.name} hColor={customerColor} />
                   </div>
                 );
               })}
@@ -120,7 +120,7 @@ export default function Home() {
                     ? orders
                     : orders.filter((el: any) => el?.name === filterKeyword)
                   ).map((rowData: any, index: number) => (
-                    <NRow
+                    <NumberRow
                       rowData={rowData}
                       key={rowData.id}
                       index={index}

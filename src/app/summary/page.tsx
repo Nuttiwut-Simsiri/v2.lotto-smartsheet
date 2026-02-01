@@ -1,7 +1,7 @@
 "use client"
 
-import SummaryTable from "../../components/summary-table";
-import NewCSTable from "../../components/new-cs-table";
+import AdminSummaryTable from "@/components/admin/AdminSummaryTable";
+import SummaryTable from "@/components/summary/SummaryTable";
 import { BarChart3, PieChart, Wallet } from 'lucide-react';
 
 export default function SummaryPage() {
@@ -28,7 +28,7 @@ export default function SummaryPage() {
             <div className="flex items-center gap-2 text-zinc-400 text-sm font-semibold uppercase tracking-wider mb-6">
               <Wallet size={16} /> สรุปการเงิน
             </div>
-            <SummaryTable />
+            <AdminSummaryTable />
           </div>
 
           <div className="glass-card p-6 border-zinc-800/50 bg-blue-500/5">
@@ -38,7 +38,7 @@ export default function SummaryPage() {
             <p className="text-zinc-400 text-sm leading-relaxed">
               ระบบคำนวณกำไรโดยหักเปอร์เซ็นต์ (20%) และคำนวณยอดที่ต้องโอนระหว่างตัวแทนโดยอัตโนมัติ
             </p>
-          </div> 
+          </div>
         </div>
 
         {/* Orders Table */}
@@ -48,7 +48,7 @@ export default function SummaryPage() {
               <h3 className="font-semibold text-white">รายละเอียดรายบุคคล</h3>
               <span className="text-xs bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full">อัปเดตล่าสุด: {new Date().toLocaleTimeString('th-TH')}</span>
             </div>
-            <NewCSTable headers={sumHeaders} />
+            <SummaryTable headers={sumHeaders} />
           </div>
         </div>
       </div>

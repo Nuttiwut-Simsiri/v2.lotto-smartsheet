@@ -1,19 +1,19 @@
-import { useRef } from "react";
-import { Info, Share2, X } from 'lucide-react';
-import { SlipContent } from "./slip-content";
+import { BillSlip } from "./BillSlip";
+import { X, Share2} from 'lucide-react';
+import { useMainStore } from "@/hooks/useMainStore";
 
-interface DetailsModalProps {
-    modalRef: React.RefObject<HTMLDialogElement | null>;
-    shareRef: React.RefObject<HTMLDivElement | null>;
+interface BillDetailsModalProps {
+    modalRef: any;
+    shareRef: any;
     selectedUser: any;
-    categoryBreakdown: { top: number; tod: number; bot: number };
+    categoryBreakdown: any;
     isSharing: boolean;
     showQRCode: boolean;
     onShowQRCodeChange: (show: boolean) => void;
     onShare: () => void;
 }
 
-export const DetailsModal = ({
+export const BillDetailsModal = ({
     modalRef,
     shareRef,
     selectedUser,
@@ -22,25 +22,25 @@ export const DetailsModal = ({
     showQRCode,
     onShowQRCodeChange,
     onShare
-}: DetailsModalProps) => {
-    return (
-        <dialog ref={modalRef} className="modal modal-middle md:modal-bottom">
-            <div className="modal-box p-0 bg-zinc-950 border border-zinc-900 rounded-t-[2.5rem] sm:rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-                <div className="pt-3 pb-1 flex flex-col items-center sm:hidden">
-                    <div className="w-12 h-1.5 bg-zinc-800 rounded-full mb-4 opacity-50" />
-                </div>
+}: BillDetailsModalProps) => {
+    const onPaidOrder = useMainStore((state) => state.onPaidOrder)
 
-                <div className="px-6 py-4 border-b border-zinc-900 flex justify-between items-center bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-10 font-display">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-500/10 rounded-xl">
-                            <Info className="text-blue-500" size={20} />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-white leading-none">รายละเอียดหมายเลข</h3>
-                            <p className="text-xs text-zinc-500 mt-1">ลูกค้า: <span className="text-blue-400">{selectedUser?.name}</span></p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
+    const handlePrint = () => {
+        window.print();
+    }
+
+    return (
+        <dialog id="details_modal" className="modal modal-middle md:modal-bottom backdrop-blur-sm" ref={modalRef}>
+            <div className={`modal-box p-0 bg-zinc-950 border border-zinc-900 rounded-t-[2.5rem] sm:rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl`}>
+                {/* Header */}
+                <div className="bg-zinc-100 px-6 py-4 flex justify-between items-center border-b border-zinc-200">
+                    <h3 className="font-bold text-lg text-zinc-800 flex items-center gap-2">
+                        <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
+                        รายละเอียดบิล
+                    </h3>
+                   
+
+                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2 mr-2 px-3 py-1.5 bg-zinc-900 rounded-xl border border-zinc-800">
                             <span className="text-[10px] font-bold text-zinc-400 uppercase">QR Code</span>
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -72,8 +72,9 @@ export const DetailsModal = ({
                         </form>
                     </div>
                 </div>
+                
 
-                <SlipContent
+                <BillSlip
                     shareRef={shareRef}
                     selectedUser={selectedUser}
                     categoryBreakdown={categoryBreakdown}
@@ -89,7 +90,7 @@ export const DetailsModal = ({
                 </div>
             </div>
             <form method="dialog" className="modal-backdrop bg-black/60 backdrop-blur-sm">
-                <button>close</button>
+                <button>ปิด</button>
             </form>
         </dialog>
     );

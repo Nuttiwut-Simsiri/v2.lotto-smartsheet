@@ -18,7 +18,7 @@ export default function SummaryTable() {
         { label: "ยอดรวมทั้งหมด", value: total, color: "text-white", icon: CircleDollarSign },
         { label: "รายได้ (20%)", value: nidProfit, color: "text-emerald-400", icon: ArrowUpRight },
         {
-            label: paiProfit < 0 ? "โอนให้เจ้า" : "เจ้าโอนให้",
+            label: paiProfit < 0 ? "จ่ายให้เจ้าเพิ่ม" : "เจ้าโอนให้เพิ่ม",
             value: Math.abs(paiProfit),
             color: paiProfit < 0 ? "text-purple-400" : "text-blue-400",
             icon: paiProfit < 0 ? ArrowDownRight : ArrowUpRight,

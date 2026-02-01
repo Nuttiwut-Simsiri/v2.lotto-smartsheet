@@ -123,11 +123,14 @@ export default function HomeClient({ session }: HomeClientProps) {
                                                     }`}
                                             >
                                                 <span className="text-sm font-bold truncate">{el.name}</span>
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <div onClick={(e) => { e.stopPropagation(); startEditing(el.name, el.name); }} className="p-1.5 hover:bg-white/10 rounded-md">
-                                                        <Edit2 size={12} />
-                                                    </div>
-                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: el.color }} />
+                                                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); startEditing(el.name, el.name); }}
+                                                        className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-[10px] text-zinc-300 rounded-lg border border-zinc-700 transition-colors"
+                                                    >
+                                                        แก้ไข
+                                                    </button>
+                                                    <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: el.color }} />
                                                 </div>
                                             </button>
                                         )}

@@ -10,7 +10,7 @@ import {
 } from '@/utils/lotteryUtils';
 
 let syncTimer: NodeJS.Timeout | null = null;
-const SYNC_DELAY = 3 * 1000; // 3 seconds
+const SYNC_DELAY = 2 * 1000; // 2 seconds
 
 interface OrderState {
     // State

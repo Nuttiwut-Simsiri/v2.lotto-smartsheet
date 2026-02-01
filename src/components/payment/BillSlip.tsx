@@ -39,8 +39,8 @@ export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode
                 <div
                     ref={shareRef}
                     style={{
-                        width: '760px',
-                        minWidth: '760px',
+                        width: '640px',
+                        minWidth: '640px',
                         backgroundColor: '#ffffff'
                     }}
                     className="p-16 space-y-12 text-[#1e293b] flex-shrink-0 relative border border-slate-200"
@@ -144,7 +144,7 @@ export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode
 
                     {/* ส่วนชำระเงิน QR Code (Redesigned for 100% Render Accuracy) */}
                     {showQRCode && (
-                        <div className="flex flex-col items-center gap-10 pt-16 border-t border-dashed border-slate-200 mt-12 bg-slate-50/50 -mx-16 px-16 pb-16">
+                        <div className="flex flex-col items-center gap-10 border-t border-dashed border-slate-200 mt-12 bg-slate-50/50 -mx-16 p-10">
                             <div className="flex flex-col items-center gap-8">
                                 {/* PromptPay Logo - Flat Design */}
                                 <div className="flex items-center bg-[#003d6b] px-6 py-2 rounded-lg">
@@ -171,7 +171,7 @@ export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode
                     )}
 
                     {/* ท้ายใบเสร็จ */}
-                    <div className="pt-20 pb-4 flex flex-col items-center gap-6 text-center">
+                    <div className="pt-10 pb-4 flex flex-col items-center gap-6 text-center">
                         <div className="flex items-center gap-2 text-[#003d6b] font-black">
                             <CheckCircle size={24} />
                             <span className="text-xl tracking-tight">ขอบพระคุณที่อุดหนุนค่ะ</span>

@@ -1,4 +1,4 @@
-import { Eye, Check } from 'lucide-react';
+import { Receipt, Check } from 'lucide-react';
 
 interface SummaryRowProps {
     el: any;
@@ -18,8 +18,7 @@ export const SummaryTableRow = ({ el, onViewDetails, onPaidOrder }: SummaryRowPr
                 onClick={() => onViewDetails(el)}
             >
                 <div className="text-xs font-mono text-center text-zinc-500 bg-zinc-900/50 group-hover/num:bg-blue-500/10 group-hover/num:text-blue-400 py-1.5 rounded-lg border border-zinc-800/50 group-hover/num:border-blue-500/30 transition-all flex items-center justify-center gap-2">
-                    •••
-                    <Eye size={12} className="opacity-0 group-hover/num:opacity-100 transition-opacity" />
+                    <Receipt size={14} className="opacity-100" />
                 </div>
             </div>
 

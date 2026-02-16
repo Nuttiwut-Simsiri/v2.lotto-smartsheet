@@ -110,23 +110,27 @@ export const calculatePreviewOrders = (
 };
 
 /**
- * Consolidate duplicate numbers for the same user
+ * Consolidate duplicate numbers for the same user (preserving entry order)
  */
 export const consolidateOrders = (orders: Order[]): Order[] => {
-    const orderByName = groupBy(orders, "name");
+    const consolidatedMap = new Map<string, Order>();
 
-    return Object.keys(orderByName).map(userName => {
-        const userOrders = orderByName[userName];
-        const groupedByNumber = groupBy(userOrders, "number");
+    for (const order of orders) {
+        // Use a composite key of name, number, and color to identify unique entries
+        const key = `${order.name || 'Unknown'}-${order.number}-${order.color || 'default'}`;
+        const existing = consolidatedMap.get(key);
 
-        return Object.keys(groupedByNumber).map(num => {
-            const group = groupedByNumber[num];
-            return {
-                ...group[0],
-                top: group.reduce((acc: number, obj: Order) => acc + (obj.top || 0), 0),
-                tod: group.reduce((acc: number, obj: Order) => acc + (obj.tod || 0), 0),
-                bot: group.reduce((acc: number, obj: Order) => acc + (obj.bot || 0), 0),
-            };
-        });
-    }).flat();
+        if (existing) {
+            // Sum values for duplicates
+            existing.top = (existing.top || 0) + (order.top || 0);
+            existing.tod = (existing.tod || 0) + (order.tod || 0);
+            existing.bot = (existing.bot || 0) + (order.bot || 0);
+            // We keep the original timestamp (tm) and id to preserve entry identity
+        } else {
+            // Add new unique entry, cloning to avoid side effects
+            consolidatedMap.set(key, { ...order });
+        }
+    }
+
+    return Array.from(consolidatedMap.values());
 };

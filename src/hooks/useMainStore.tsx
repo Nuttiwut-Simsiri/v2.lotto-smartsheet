@@ -104,7 +104,7 @@ export const useMainStore = create<OrderState>()(
 
                 set({
                     orders: consolidated
-                        .sort((a, b) => b.tm - a.tm)
+                        .sort((a, b) => a.tm - b.tm)
                         .sort((a, b) => {
                             const indexA = uniqUsers.findIndex(el => el.name === a.name);
                             const indexB = uniqUsers.findIndex(el => el.name === b.name);
@@ -362,7 +362,7 @@ export const useMainStore = create<OrderState>()(
 
                 set({
                     orders: consolidated
-                        .sort((a, b) => b.tm - a.tm)
+                        .sort((a, b) => a.tm - b.tm)
                         .sort((a, b) => {
                             const indexA = uniqUsers.findIndex(el => el.name === a.name);
                             const indexB = uniqUsers.findIndex(el => el.name === b.name);
@@ -423,7 +423,13 @@ export const useMainStore = create<OrderState>()(
                             const uniqUsers = [...new Map(consolidated.map(item => [`${item.name}-${item.color}`, item])).values()].filter(el => el.name);
 
                             set({
-                                orders: consolidated,
+                                orders: consolidated
+                                    .sort((a, b) => a.tm - b.tm)
+                                    .sort((a, b) => {
+                                        const indexA = uniqUsers.findIndex(el => el.name === a.name);
+                                        const indexB = uniqUsers.findIndex(el => el.name === b.name);
+                                        return indexA - indexB;
+                                    }),
                                 uniqOrder: uniqUsers as Order[],
                                 lastSynced: Date.now()
                             });

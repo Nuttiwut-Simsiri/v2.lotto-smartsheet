@@ -67,7 +67,7 @@ export const CongratulationSlip = ({ selectedUser, shareRef }: CongratulationSli
                                 {selectedUser?.name}
                             </h1>
                         </div>
-                        <div className="p-10 bg-[#d4af37] border-4 border-amber-600 rounded-[2rem] text-red-950 flex flex-col justify-center items-center shadow-2xl">
+                        <div className="p-10 bg-[#d4af37] border-4 border-amber-600 rounded-[2rem] text-red-950 flex flex-col justify-center items-center">
                             <p className="text-4xl font-black tracking-tighter">ถูกรางวัล! </p>
                         </div>
                     </div>
@@ -84,15 +84,15 @@ export const CongratulationSlip = ({ selectedUser, shareRef }: CongratulationSli
                         <div className="bg-red-900/40 rounded-b-3xl border-x-2 border-b-2 border-[#d4af37]/20 pb-4">
                             {selectedUser?.details?.map((detail: any, idx: number) => (
                                 <div key={idx} className="grid grid-cols-[1.5fr_1.5fr_1fr] px-12 py-10 items-center border-b border-[#d4af37]/10 last:border-0">
-                                    <div className="font-mono text-[#d4af37] font-black text-5xl tracking-tighter">
+                                    <div className="font-mono text-[#d4af37] font-black text-4xl tracking-tighter">
                                         {detail.number}
                                     </div>
                                     <div className="text-center">
-                                        <span className="px-8 py-3 bg-[#be123c] text-white rounded-full font-black text-2xl border-2 border-[#d4af37]/30 shadow-lg">
+                                        <span className="px-8 py-3 bg-[#be123c] text-white rounded-full font-black text-2xl border-2 border-[#d4af37]/30">
                                             {detail.buyAmountLabel}
                                         </span>
                                     </div>
-                                    <div className="text-right font-black text-5xl text-white tracking-tighter tabular-nums text-shadow">
+                                    <div className="text-right font-black text-4xl text-white tracking-tighter tabular-nums">
                                         {detail.rewardPrice?.toLocaleString()}
                                     </div>
                                 </div>
@@ -101,7 +101,7 @@ export const CongratulationSlip = ({ selectedUser, shareRef }: CongratulationSli
                     </div>
 
                     {/* Total Summary */}
-                    <div className="mt-12 bg-gradient-to-r from-[#d4af37] via-[#fcd34d] to-[#d4af37] border-4 border-amber-700 p-12 rounded-[3rem] flex items-center justify-between relative shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+                    <div className="mt-12 bg-gradient-to-r from-[#d4af37] via-[#fcd34d] to-[#d4af37] border-4 border-amber-700 p-12 rounded-[3rem] flex items-center justify-between relative">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 text-red-900">
                                 <Wallet size={40} />
@@ -126,7 +126,7 @@ export const CongratulationSlip = ({ selectedUser, shareRef }: CongratulationSli
                             <p className="text-base font-bold text-amber-100 leading-relaxed italic">
                                 " ขอให้ท่านมีความสุขและโชคดี ถูกรางวัลใหญ่ในทุกๆ งวดนะคะ "
                             </p>
-                            <p className="text-2xl font-black text-[#d4af37] tracking-[0.5em] uppercase opacity-80">
+                            <p className="text-2xl font-black text-[#d4af37] uppercase opacity-80">
                                 — ขอบพระคุณที่อุดหนุนค่ะ —
                             </p>
                         </div>

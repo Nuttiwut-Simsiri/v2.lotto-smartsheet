@@ -174,7 +174,7 @@ export default function PaymentPage() {
     try {
       const dataUrl = await toJpeg(rewardShareRef.current, {
         cacheBust: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#ae0001',
         pixelRatio: 3,
         canvasWidth: 760,
         style: {

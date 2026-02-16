@@ -19,7 +19,7 @@ export const CongratulationModal = ({
 
     return (
         <dialog id="congrats_modal" className="modal modal-middle md:modal-bottom backdrop-blur-sm" ref={modalRef}>
-             <div className="modal-box p-0 bg-zinc-950 border border-zinc-900 rounded-t-[2.5rem] sm:rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="modal-box p-0 bg-zinc-950 border border-zinc-900 rounded-t-[2.5rem] sm:rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
                 <div className="pt-3 pb-1 flex flex-col items-center sm:hidden">
                     <div className="w-12 h-1.5 bg-zinc-800 rounded-full mb-4 opacity-50" />
                 </div>
@@ -55,8 +55,8 @@ export const CongratulationModal = ({
                     </div>
                 </div>
 
-                <div ref={shareRef} className="overflow-y-auto">
-                    <CongratulationSlip selectedUser={selectedUser} />
+                <div className="overflow-y-auto">
+                    <CongratulationSlip selectedUser={selectedUser} shareRef={shareRef} />
                 </div>
 
                 <div className="p-6 bg-zinc-950 border-t border-zinc-900">

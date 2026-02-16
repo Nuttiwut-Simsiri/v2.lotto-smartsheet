@@ -39,8 +39,8 @@ export const BillSlip = ({ shareRef, selectedUser, categoryBreakdown, showQRCode
                 <div
                     ref={shareRef}
                     style={{
-                        width: '640px',
-                        minWidth: '640px',
+                        width: '720px',
+                        minWidth: '720px',
                         backgroundColor: '#ffffff'
                     }}
                     className="p-16 space-y-12 text-[#1e293b] flex-shrink-0 relative border border-slate-200"

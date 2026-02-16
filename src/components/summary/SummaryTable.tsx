@@ -44,11 +44,11 @@ export default function SummaryTable({ headers }: { headers: string[] }) {
             const dataUrl = await toJpeg(shareRef.current, {
                 cacheBust: true,
                 backgroundColor: '#ffffff',
-                pixelRatio: 2,
-                canvasWidth: 780,
+                pixelRatio: 3,
+                canvasWidth: 720,
                 style: {
                     margin: '0',
-                    width: '780px',
+                    width: '720px',
                 }
             });
 

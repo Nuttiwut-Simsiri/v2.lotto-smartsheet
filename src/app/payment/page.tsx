@@ -6,7 +6,7 @@ import { Rewards, HPNumbersProps } from "@/types/rewards";
 import { useEffect, useState } from "react";
 import { CreditCard, Trophy, CheckCircle2, AlertTriangle, Hash, Share2, Printer, Eye } from "lucide-react";
 import { CongratulationModal } from "@/components/payment/CongratulationModal";
-import { toPng } from 'html-to-image';
+import { toJpeg } from 'html-to-image';
 import { useRef } from "react";
 
 const WinningInput = ({ label, value, onChange, maxLength }: any) => {
@@ -172,17 +172,20 @@ export default function PaymentPage() {
     if (!rewardShareRef.current || isSharingReward) return;
     setIsSharingReward(true);
     try {
-      const dataUrl = await toPng(rewardShareRef.current, {
+      const dataUrl = await toJpeg(rewardShareRef.current, {
         cacheBust: true,
         backgroundColor: '#ffffff',
-        pixelRatio: 2,
-        canvasWidth: 800,
-        style: { margin: '0', width: '800px' }
+        pixelRatio: 3,
+        canvasWidth: 760,
+        style: {
+          margin: '0',
+          width: '760px',
+        }
       });
 
       const blob = await (await fetch(dataUrl)).blob();
-      const fileName = `reward-congrats-${selectedUser?.name}-${Date.now()}.png`;
-      const file = new File([blob], fileName, { type: 'image/png' });
+      const fileName = `reward-congrats-${selectedUser?.name}-${Date.now()}.jpeg`;
+      const file = new File([blob], fileName, { type: 'image/jpeg' });
 
       if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
